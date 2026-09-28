@@ -1,1 +1,411 @@
-/* You can add global styles to this file, and also import other style files */
+/* ============================================================================
+   Nexora design tokens, global base and shared primitives.
+   The `--nx-*` names ARE the design system: there is deliberately no second
+   alias layer. Colours, geometry and motion are declared once here and
+   consumed by name everywhere else.
+   ========================================================================== */
+
+/* --- Fonts (self-hosted, versioned path: files under public/ are copied
+   verbatim and never content-hashed, so a fixed path would cache stale
+   forever after a version bump). `swap` avoids a 3s FOIT on a login page. */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-1.7.2/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-1.7.2/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Surfaces */
+  --nx-page: #0f0e13;
+  --nx-panel: #15131b;
+  --nx-field: #1b1922;
+
+  /* Brand */
+  --nx-primary: #7457e8;
+  --nx-primary-hover: #8166f0;
+  --nx-primary-active: #6649db;
+  --nx-accent: #8a6cff;
+  --nx-link: #b7a8ff;
+  --nx-link-hover: #d2c8ff;
+  --nx-on-primary: #ffffff;
+  --nx-on-status: #0f0e13;
+
+  /* Text */
+  --nx-text: #f1eff6;
+  --nx-text-secondary: #a39db5;
+  --nx-text-label: #dad6e4;
+  --nx-text-muted: #8a8499;
+  --nx-text-dim: #6b657c;
+
+  /* Borders */
+  --nx-border: #2b2735;
+  --nx-border-subtle: #1e1b25;
+
+  /* Status */
+  --nx-success: #3dd68c;
+  --nx-success-bg: rgba(61, 214, 140, 0.12);
+  --nx-success-border: rgba(61, 214, 140, 0.4);
+  --nx-warning: #f5b94a;
+  --nx-error: #e5484d;
+  --nx-error-text: #ff8a8e;
+  --nx-error-title: #ffb4b6;
+  --nx-error-body: #d7a9ac;
+  --nx-error-bg: rgba(229, 72, 77, 0.08);
+  --nx-error-border: rgba(229, 72, 77, 0.32);
+
+  /* Decoration */
+  --nx-dot-grid: #211e29;
+  --nx-svg-wire: #2b2735;
+  --nx-svg-node: #3a3547;
+  --nx-spinner-track: rgba(255, 255, 255, 0.35);
+}
+
+:root {
+  /* Field state. THREE purples exist: --nx-primary (buttons, logo tile,
+     checkbox accent), --nx-accent (input focus border, SVG nodes) and
+     --nx-link (text links, button focus outline). The focus border is
+     --nx-accent, NOT --nx-primary. */
+  --nx-field-border: var(--nx-border);
+  --nx-field-border-focus: var(--nx-accent);
+  --nx-field-border-invalid: var(--nx-error);
+  --nx-ring-focus: 0 0 0 3px rgba(138, 108, 255, 0.22);
+  --nx-ring-error: 0 0 0 3px rgba(229, 72, 77, 0.18);
+  --nx-field-disabled-opacity: 0.6;
+
+  /* Button state. Both focus affordances stay separate by decision: inputs
+     ring with box-shadow, the button rings with outline. Neither is defined
+     in terms of the other. */
+  --nx-button-disabled-opacity: 0.85;
+  --nx-outline-focus: 2px solid #b7a8ff;
+  --nx-outline-focus-offset: 2px;
+
+  /* Text state */
+  --nx-placeholder: #6b657c;
+  --nx-autofill-shadow: 0 0 0 40px #1b1922 inset;
+  --nx-autofill-text: #f1eff6;
+
+  /* Motion */
+  --nx-transition-fast: 150ms;
+  --nx-transition-base: 200ms;
+  --nx-duration-spin: 700ms;
+  --nx-duration-bar: 2000ms;
+}
+
+/* Global base. `body` is an ANCESTOR of app-root, so these can never live in
+   a `:host` block. No fixed height here: routed pages own their own height. */
+html {
+  color-scheme: dark;
+  background-color: var(--nx-page);
+  font-family: 'Geist', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  background-color: var(--nx-page);
+  color: var(--nx-text);
+}
+
+@keyframes nx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nx-bar {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* --- Field ---------------------------------------------------------------- */
+
+.nx-field {
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--nx-field-border);
+  border-radius: 8px;
+  background-color: var(--nx-field);
+  color: var(--nx-text);
+  outline: none;
+  /* The `font` shorthand is load-bearing on form controls: they do not
+     inherit font-family, so an inherited stack would fall back to the UA
+     font. It is deliberately NOT used on the <span> primitives below. */
+  font:
+    400 15px 'Geist',
+    system-ui,
+    sans-serif;
+  transition:
+    border-color var(--nx-transition-fast),
+    box-shadow var(--nx-transition-fast);
+}
+
+.nx-field::placeholder {
+  color: var(--nx-placeholder);
+}
+
+/* Plain :focus, not :focus-visible: the field's focus model is a boolean
+   flipped by onFocus/onBlur, i.e. presence of focus. */
+.nx-field:focus {
+  border-color: var(--nx-field-border-focus);
+  box-shadow: var(--nx-ring-focus);
+}
+
+.nx-field[aria-invalid='true'] {
+  border-color: var(--nx-field-border-invalid);
+}
+
+.nx-field[aria-invalid='true']:focus {
+  box-shadow: var(--nx-ring-error);
+}
+
+.nx-field:disabled {
+  opacity: var(--nx-field-disabled-opacity);
+}
+
+/* --- Autofill override: MANDATORY, WebKit/Blink only ----------------------
+   Chrome paints its own autofill background and its own text colour, and
+   -webkit-text-fill-color outranks `color`, so without this the dark field
+   breaks. It fails SILENTLY: no error, no warning, no failing test.
+   These rules are LAST because the plain :focus rule above has EQUAL
+   specificity (0,3,0) and would otherwise win on source order and REPLACE
+   the wash. The ring is layered on top of the inset wash instead — an inset
+   and an outset shadow compose. */
+.nx-field:-webkit-autofill,
+.nx-field:-webkit-autofill:hover,
+.nx-field:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--nx-autofill-text);
+  -webkit-box-shadow: var(--nx-autofill-shadow);
+}
+
+.nx-field:-webkit-autofill:focus {
+  -webkit-box-shadow: var(--nx-autofill-shadow), var(--nx-ring-focus);
+}
+
+.nx-field:-webkit-autofill[aria-invalid='true']:focus {
+  -webkit-box-shadow: var(--nx-autofill-shadow), var(--nx-ring-error);
+}
+
+.nx-field-control {
+  position: relative;
+  display: flex;
+}
+
+/* The affix variant, bound to the wrapper that justifies it: no
+   `.nx-field--affix` modifier exists, and this padding is structurally
+   impossible to apply to a field that has no toggle. `min-width: 0` is
+   REQUIRED, not stylistic: a flex item's default `min-width: auto` refuses
+   to shrink below its content width, letting the 84px padding push the
+   input past the field so the toggle escapes the container. */
+.nx-field-control > .nx-field {
+  flex: 1;
+  min-width: 0;
+  padding-right: 84px;
+}
+
+.nx-field-toggle {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  height: 36px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nx-link);
+  cursor: pointer;
+  font:
+    500 13px 'Geist',
+    system-ui,
+    sans-serif;
+}
+
+.nx-field-toggle:hover {
+  background: rgba(138, 108, 255, 0.1);
+}
+
+.nx-field-toggle:focus-visible {
+  outline: var(--nx-outline-focus);
+  outline-offset: var(--nx-outline-focus-offset);
+}
+
+.nx-field-toggle:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- Button --------------------------------------------------------------- */
+
+.nx-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--nx-primary);
+  color: var(--nx-on-primary);
+  cursor: pointer;
+  font:
+    500 15px 'Geist',
+    system-ui,
+    sans-serif;
+  transition: background-color var(--nx-transition-fast);
+}
+
+.nx-button:hover {
+  background-color: var(--nx-primary-hover);
+}
+
+.nx-button:active {
+  background-color: var(--nx-primary-active);
+}
+
+/* Inputs ring with box-shadow; this button rings with outline. Both are
+   verified in the design and both are kept — they are NOT unified. The
+   two-rule idiom prevents a UA default ring leaking on mouse press. */
+.nx-button:focus-visible {
+  outline: var(--nx-outline-focus);
+  outline-offset: var(--nx-outline-focus-offset);
+}
+
+.nx-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.nx-button:disabled,
+.nx-button[aria-busy='true'] {
+  opacity: var(--nx-button-disabled-opacity);
+}
+
+/* --- Alert ---------------------------------------------------------------- */
+
+.nx-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  margin-bottom: 24px;
+  border: 1px solid var(--nx-error-border);
+  border-radius: 8px;
+  background-color: var(--nx-error-bg);
+}
+
+/* An 18px FILLED circle (the inline-error icon is a 14px OUTLINED one).
+   Both are verified in the design; neither is normalised here. This is a
+   <span>, so it inherits font-family and uses longhand only. */
+.nx-alert-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background-color: var(--nx-error);
+  color: var(--nx-on-status);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nx-alert-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nx-alert-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nx-error-title);
+}
+
+.nx-alert-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--nx-error-body);
+}
+
+/* --- Inline error --------------------------------------------------------- */
+
+.nx-inline-error {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--nx-error-text);
+}
+
+/* Outline only, no fill and no colour: the design gives this icon a
+   `border` on a transparent fill, and adding a fill would fabricate the
+   alert's treatment onto the inline error. */
+.nx-inline-error-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--nx-error-text);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* --- Divider -------------------------------------------------------------- */
+
+/* No margin: the two forms disagree (32px 0 24px vs 28px 0 22px) and
+   shipping either would silently pick a side. The owning page sets it. */
+.nx-divider {
+  height: 1px;
+  background-color: var(--nx-border);
+}
+
+/* --- Bar ------------------------------------------------------------------ */
+
+/* No height either: the strength bar is 3px and the progress track 4px.
+   Same rule as the divider — the owner sets the height. The four strength
+   states (--nx-success / --nx-warning / --nx-error / --nx-border) all exist
+   as tokens already, so the owner selects one. */
+.nx-bar {
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: var(--nx-border);
+  transition: background-color var(--nx-transition-base);
+}
+
+.nx-bar-fill {
+  height: 100%;
+  background-color: var(--nx-success);
+  animation: nx-bar var(--nx-duration-bar) ease-out forwards;
+}
+
+/* --- Spinner -------------------------------------------------------------- */
+
+/* `border-top-color: var(--nx-on-primary)` is correct only while the
+   spinner lives inside the --nx-primary button, which is every verified
+   site. Over a non-primary fill the correct role token is
+   --nx-on-status; the two are both near-white, so the mistake is silent. */
+.nx-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--nx-spinner-track);
+  border-top-color: var(--nx-on-primary);
+  border-radius: 50%;
+  animation: nx-spin var(--nx-duration-spin) linear infinite;
+}
