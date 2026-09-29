@@ -1,0 +1,158 @@
+<!--
+  `novalidate` is LOAD-BEARING, not a detail. Both email inputs are
+  `type="email"`, which puts them under the browser's NATIVE constraint
+  validation. With it active, a submit with an invalid address makes the browser
+  raise its own bubble, `submit` is never dispatched, this handler never runs —
+  and the "the service is NEVER called" assertion would then pass FOR THE WRONG
+  REASON, because the browser rejected the value before our rule ever saw it.
+  The design carries it on both prototypes (LoginForm.dc.html:17). The spec
+  asserts it directly on the rendered element, because jsdom does not raise the
+  bubble a browser does and the behavioural half alone would stay green.
+-->
+@if (!isSuccess()) {
+  <form novalidate (submit)="submit($event)">
+    <div class="header">
+      <h1 class="header__title">{{ copy.title }}</h1>
+      <p class="header__subtitle">{{ copy.subtitle }}</p>
+    </div>
+
+    @if (showError()) {
+      <div class="nx-alert" role="alert">
+        <span class="nx-alert-icon" aria-hidden="true">!</span>
+        <div class="nx-alert-body">
+          <span class="nx-alert-title">{{ copy.alertTitle }}</span>
+          <span class="nx-alert-text">{{ copy.alertBody }}</span>
+        </div>
+      </div>
+    }
+
+    <div class="field">
+      <label class="field__label" [for]="emailId">{{ common.emailLabel }}</label>
+      <input
+        class="nx-field"
+        [id]="emailId"
+        type="email"
+        autocomplete="username"
+        [placeholder]="common.emailPlaceholder"
+        [formControl]="form().controls.email"
+        [attr.aria-invalid]="errors().email ? 'true' : null"
+        (input)="onInput('email', $event)"
+        (focus)="focus('email')"
+        (blur)="onEmailBlur()"
+      />
+      @if (errors().email; as emailKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('email', emailKey) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" [for]="passwordId">{{ common.passwordLabel }}</label>
+      <div class="nx-field-control">
+        <input
+          class="nx-field"
+          [id]="passwordId"
+          [type]="pwType()"
+          autocomplete="current-password"
+          [placeholder]="copy.passwordPlaceholder"
+          [formControl]="form().controls.password"
+          [attr.aria-invalid]="errors().password ? 'true' : null"
+          (input)="onInput('password', $event)"
+          (focus)="focus('password')"
+          (blur)="onPasswordBlur()"
+          (keyup)="onCapsKey($event)"
+          (keydown)="onCapsKey($event)"
+        />
+        <button
+          class="nx-field-toggle"
+          type="button"
+          [attr.aria-label]="showLabel()"
+          [disabled]="loading()"
+          (click)="toggleReveal()"
+        >
+          {{ showText() }}
+        </button>
+      </div>
+      @if (errors().password; as passwordKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('password', passwordKey) }}</span>
+        </div>
+      }
+      @if (showCaps()) {
+        <div class="caps">
+          <span class="caps-badge" aria-hidden="true">↑</span>
+          <span>{{ common.capsLock }}</span>
+        </div>
+      }
+    </div>
+
+    <button
+      class="nx-button"
+      type="submit"
+      [disabled]="loading()"
+      [attr.aria-busy]="loading() ? 'true' : null"
+    >
+      @if (loading()) {
+        <span class="nx-spinner" aria-hidden="true"></span>
+        <span>{{ copy.submitting }}</span>
+      } @else {
+        <span>{{ common.signIn }}</span>
+      }
+    </button>
+  </form>
+
+  <!--
+      Both inputs are disabled by driving their CONTROL state from the
+      component's effect, never by a `disabled` attribute binding: the reactive
+      forms directive owns that attribute and a template binding on it conflicts
+      with the directive.
+    -->
+
+  <!--
+      DIVERGENCE D1 — PRESERVED. The two forms disagree (login `32px 0 24px`,
+    register `28px 0 22px`) and `src/styles.css:373-376` ships `.nx-divider`
+    with NO margin precisely so shipping either would silently pick a side. The
+    margin is set here, in the owner, with a component-local class that does not
+    restyle the primitive.
+  -->
+  <div class="divider nx-divider"></div>
+
+  <p class="crosslink">
+    {{ copy.noAccountQuestion }}
+    <a routerLink="/register">{{ common.createAccount }}</a>
+  </p>
+
+  @if (showHint()) {
+    <!-- DIVERGENCE D5 — PRESERVED: 32px here, 28px on register. -->
+    <div class="hint">{{ copy.hintLine1 }}<br />{{ copy.hintLine2 }}</div>
+  }
+}
+
+@if (isSuccess()) {
+  <div class="success" role="status">
+    <div class="success-disc" aria-hidden="true">✓</div>
+    <div class="success-body">
+      <h1 class="header__title">{{ copy.successTitle }}</h1>
+      <p class="header__subtitle">
+        {{ copy.successBody }} <span class="slot">{{ form().controls.email.value }}</span
+        >.
+        {{ common.redirecting }}
+      </p>
+    </div>
+    <!--
+      DIVERGENCE D2 — PRESERVED. `.nx-bar` ships NO height (`styles.css:384-389`,
+      whose comment names this exact disagreement) because the strength bar is
+      3px and this progress track is 4px: a 3px track on a 400px bar animating
+      0 to 100% is thin. The owner sets the height.
+    -->
+    <div class="success-bar nx-bar">
+      <div class="nx-bar-fill"></div>
+    </div>
+    <button class="success-reset" type="button" (click)="onReset()">
+      {{ copy.successReset }}
+    </button>
+  </div>
+}

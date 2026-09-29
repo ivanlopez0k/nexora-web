@@ -1,0 +1,196 @@
+/*
+  What this stylesheet owns: the login form's own geometry. What it must NOT
+  own: the appearance of any of the 15 global `nx-*` primitives.
+
+  Three structural rules, all enforced rather than promised:
+
+  1. ZERO `box-shadow` declarations. No component stylesheet declares the
+     property, so no component selector can compete for it at ANY specificity.
+     The primitive's autofill override (`src/styles.css:187-200`) uses
+     `-webkit-box-shadow`, an alias of `box-shadow` in Blink, and an inline
+     declaration would beat it by cascade origin rather than specificity.
+  2. ZERO selectors for a global primitive. Every `nx-*` class is CONSUMED
+     above; none is redeclared here. `shared/README.md:9-10` forbids the
+     re-declaration and guard G16 is the mechanical check.
+  3. ZERO hardcoded hex. Every colour is one of the 48 `--nx-*` tokens.
+
+  Each preserved divergence carries its value AND its source line, because a
+  value without provenance gets "standardised" eventually.
+*/
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* The design's login header spacing; register is 28px. Same systematic
+     density difference as D1, on one more block. */
+  margin-bottom: 32px;
+}
+
+.header__title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--nx-text);
+}
+
+.header__subtitle {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--nx-text-secondary);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field:first-of-type {
+  margin-bottom: 20px;
+}
+
+.field:last-of-type {
+  margin-bottom: 28px;
+}
+
+.field__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nx-text-label);
+}
+
+/*
+  DIVERGENCE D3 — PRESERVED. The caps badge is a 3px-radius SQUARE and the
+  inline error is a 50% CIRCLE, both 14px. The two shapes are a code that
+  survives greyscale and colour-blind viewing, which is exactly what lets R6
+  stack the amber square above the red circle in the same field group. There is
+  no `.nx-badge`: the icon primitives are `.nx-alert-icon` (18px FILLED) and
+  `.nx-inline-error-icon` (14px OUTLINED), both already shipped at
+  `styles.css:310` and `:356` — consumed above, never restyled.
+*/
+.caps {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--nx-warning);
+}
+
+.caps-badge {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--nx-warning);
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* DIVERGENCE D1 — PRESERVED: login `32px 0 24px`, register `28px 0 22px`. */
+.divider {
+  margin: 32px 0 24px;
+}
+
+.crosslink {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+  color: var(--nx-text-secondary);
+}
+
+.crosslink a {
+  color: var(--nx-link);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.crosslink a:hover {
+  color: var(--nx-link-hover);
+  text-decoration: underline;
+}
+
+.crosslink a:focus-visible {
+  outline: var(--nx-outline-focus);
+  outline-offset: var(--nx-outline-focus-offset);
+}
+
+/* DIVERGENCE D5 — PRESERVED: 32px here, 28px on register. */
+.hint {
+  margin-top: 32px;
+  padding: 10px 12px;
+  border: 1px dashed var(--nx-border);
+  border-radius: 8px;
+  font:
+    400 12px/1.6 'Geist Mono',
+    ui-monospace,
+    monospace;
+  color: var(--nx-text-muted);
+}
+
+.success {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.success-disc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--nx-success-border);
+  border-radius: 50%;
+  background-color: var(--nx-success-bg);
+  color: var(--nx-success);
+  font-size: 22px;
+}
+
+.success-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/*
+  The slot is a colour decision, not a copy one: the design colours the
+  interpolated email differently from the sentence around it, which is one
+  reason the sentence is stored as prefix leaves in the copy module.
+*/
+.slot {
+  color: var(--nx-text-label);
+}
+
+/* DIVERGENCE D2 — PRESERVED: this track is 4px; the strength bar is 3px. */
+.success-bar {
+  height: 4px;
+}
+
+.success-reset {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--nx-link);
+  cursor: pointer;
+  font:
+    500 14px 'Geist',
+    system-ui,
+    sans-serif;
+}
+
+.success-reset:hover {
+  color: var(--nx-link-hover);
+}
+
+.success-reset:focus-visible {
+  outline: var(--nx-outline-focus);
+  outline-offset: var(--nx-outline-focus-offset);
+}
