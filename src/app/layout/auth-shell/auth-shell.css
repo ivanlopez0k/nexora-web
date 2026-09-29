@@ -1,0 +1,213 @@
+/*
+  What this stylesheet owns: the two-panel split, the brand panel's own
+  appearance, and THE ONE media query in this change.
+
+  What it must NOT own: the appearance of any of the 15 global `nx-*`
+  primitives. The shell renders none of them — the form inside it does — and
+  `shared/README.md:9-10` forbids re-declaring a primitive. Guard G16a is the
+  mechanical check, and it is INVERTED: it asserts the comprehended set of 15 so
+  a sixteenth class cannot appear unnoticed.
+
+  Geometry source: `Nexora Login.dc.html:22-125` (login) and `Nexora Register.dc.html`
+  (byte-identical panel, zero `Compare-Object` differences). Every value below
+  is either that file or the marked D4 decision block at the end.
+*/
+
+/* `Login:22` — the card's own grid. The page background is already set on
+   `body` (`styles.css:113-117`); it is repeated here because the shell is the
+   root of this layout and must paint even if it is embedded elsewhere. */
+:host {
+  display: grid;
+  grid-template-columns: 760px 1fr;
+  min-height: 100vh;
+  background-color: var(--nx-page);
+  color: var(--nx-text);
+}
+
+/* `Login:24` */
+.brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 56px 64px;
+  background-color: var(--nx-page);
+  background-image: radial-gradient(circle, var(--nx-dot-grid) 1px, transparent 1.2px);
+  /* The 24px cell is a LOCAL value, not a palette token: it is the grid pitch,
+     a geometry decision, and it is not one of the 48 `--nx-*` colours. */
+  background-size: 24px 24px;
+  overflow: hidden;
+}
+
+.brand__lockup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.logo-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background-color: var(--nx-primary);
+}
+
+/* The rotated square inside the tile. `border` on a COMPONENT-LOCAL class is
+   not R1's forbidden inline border binding: R1 governs the 15 primitives'
+   appearance, and this is brand geometry that no primitive models. */
+.logo-mark {
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--nx-on-primary);
+  transform: rotate(45deg);
+}
+
+.wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--nx-text);
+}
+
+.brand__figure {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.brand__headline {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--nx-text);
+  text-wrap: balance;
+}
+
+.brand__description {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--nx-text-secondary);
+  text-wrap: pretty;
+}
+
+/* `Login:116`. The typography lives HERE and inherits into both children, which
+   is why `.brand__version` carries no declaration of its own — it is a
+   semantic hook for the left cell, not a styled element. */
+.brand__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--nx-border-subtle);
+  font:
+    400 12px/1.5 'Geist Mono',
+    ui-monospace,
+    monospace;
+  color: var(--nx-text-dim);
+}
+
+.brand__status {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.brand__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--nx-success);
+}
+
+/*
+  `Login:122` declares `align-items: center`, and that value is a REAL DEFECT
+  that the design would have shipped. This host is `min-height: 100vh`, so on a
+  short viewport the panel is taller than the space it is centred in. A flex
+  item centred on the cross axis and OVERFLOWING extends toward BLOCK-START —
+  and overflow toward the start edge does NOT grow the scrollable overflow area.
+  Above roughly 1023x600 the top of the form is therefore unreachable: the user
+  cannot scroll up to it.
+
+  `align-items: center` is therefore NOT used here, and neither is
+  `flex-start`, which fixes the clipping but leaves a short form sitting at the
+  top of its panel instead of optically centred — visibly wrong on a login
+  screen, which is a page people judge in the first second.
+
+  The resolution is `margin: auto` on the child, and it is load-bearing in both
+  directions:
+
+  - the form is SHORTER than the panel — the auto margins absorb the free space
+    equally on both sides, which is optically identical to `align-items: center`
+    and matches the design;
+  - the form is TALLER than the panel — auto margins resolve to zero instead of
+    producing negative space, so the content starts at the top and overflows
+  DOWNWARD, and downward overflow does grow the scrollable area. The top of the
+  form stays reachable, which is exactly what `align-items: center` broke.
+
+  Do not "simplify" this back to `align-items: center`. It will look right at
+  1440x1024 and become unreachable at roughly 1023x600.
+*/
+.form-panel {
+  display: flex;
+  justify-content: center;
+  padding: 56px;
+  background-color: var(--nx-panel);
+  border-left: 1px solid var(--nx-border);
+}
+
+/* The design puts `style="width:100%;max-width:400px"` on the form import
+   itself. A projected component cannot be styled by its parent, so the
+   constraint moves to a wrapper — the same geometry, one element earlier. */
+.form-panel__content {
+  /* See the block above: this is the safe centring, not a stylistic margin. */
+  margin: auto;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ============================================================================
+   D4 — BELOW 1024px, THIS IS OUR DESIGN. THE DESIGN SPECIFIES NONE OF IT.
+
+   `Nexora Login.dc.html` is a fixed 1440x1024 card: `760px 1fr` in px, every
+   value in px, and no media query anywhere in the file. Everything below
+   1024px is a decision THIS project made, and the design is not authority for
+   any of it. Do not cite the design when changing these four declarations.
+
+   320px is a REVIEW CHECK, not a support commitment: nobody specified a floor,
+   and `verify` still owes a human visual pass at 1023px and at 320px.
+   ========================================================================== */
+@media (max-width: 1024px) {
+  :host {
+    /* `minmax(0, 1fr)`, NEVER a bare `1fr`, and the zero is load-bearing for
+       the same reason `styles.css:210-212` gives it: a grid/flex track sized
+       `1fr` has an automatic minimum, so the panel refuses to shrink below
+       its content's min-content width and the 56px padding pushes it into a
+       horizontal overflow instead of letting the column narrow. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .form-panel {
+    /* 24px has NO design basis whatsoever — the design's `padding: 56px`
+       (`Login:122`) is its only padding value and it is a desktop value. The
+       figure is ours. */
+    padding: 24px;
+  }
+}
