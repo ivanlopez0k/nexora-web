@@ -1,0 +1,84 @@
+<svg width="600" height="460" viewBox="0 0 600 460" fill="none" aria-hidden="true">
+  <!--
+    R2 — THE FILL TRAP, and the highest-risk single line of the change.
+
+    The design writes every colour as a PRESENTATION ATTRIBUTE
+    (`fill="#8A6CFF"`, `stroke="#2B2735"`). Translated naively to
+    `fill="var(--nx-accent)"`, the markup stays valid, the build stays green and
+    the WHOLE ILLUSTRATION RENDERS INVISIBLE: a `var()` is only substituted in a
+    CSS declaration, and `fill`/`stroke` presentation attributes are not CSS
+    declarations. No build error, no failing test, no warning.
+
+    So every colour below is an INLINE `style`, which is CSS and does resolve.
+    `stroke-width`, `stroke-opacity`, `cx`, `r` and `d` stay presentation
+    attributes because they carry no token.
+
+    The 8 design hexes map to 8 tokens, one-to-one:
+      #2B2735 wire     -> --nx-svg-wire
+      #7457E8 path     -> --nx-primary
+      #3A3547 nodes    -> --nx-svg-node
+      #8A6CFF nodes    -> --nx-accent
+      #0F0E13 hub hole -> --nx-on-status
+      #D2C8FF traveller-> --nx-link-hover
+      #6B657C labels   -> --nx-text-dim
+      #B7A8FF hub label-> --nx-link
+  -->
+  <g stroke-width="1" style="stroke: var(--nx-svg-wire)">
+    <path d="M60 90 L190 50 L320 120 L460 70 L550 180"></path>
+    <path d="M60 90 L120 220 L250 260 L390 230 L550 180"></path>
+    <path d="M190 50 L250 260 M320 120 L390 230 M460 70 L390 230"></path>
+    <path d="M120 220 L70 350 L210 390 L350 360 L490 330 L550 180"></path>
+    <path d="M250 260 L210 390 M390 230 L350 360 M390 230 L490 330 M490 330 L540 420"></path>
+  </g>
+
+  <!-- The highlighted corridor. Its `id` is kept from the design even though
+       nothing references it: removing markup during a port is a change nobody
+       asked for, and the SMIL traveller below is a verbatim copy of its `d`. -->
+  <path
+    id="nx-p1"
+    d="M70 350 L120 220 L250 260 L390 230 L550 180"
+    stroke-width="1.5"
+    style="stroke: var(--nx-primary)"
+  ></path>
+
+  <g style="fill: var(--nx-svg-node)">
+    <circle cx="60" cy="90" r="3"></circle>
+    <circle cx="190" cy="50" r="3"></circle>
+    <circle cx="320" cy="120" r="3"></circle>
+    <circle cx="460" cy="70" r="3"></circle>
+    <circle cx="210" cy="390" r="3"></circle>
+    <circle cx="350" cy="360" r="3"></circle>
+    <circle cx="490" cy="330" r="3"></circle>
+    <circle cx="540" cy="420" r="3"></circle>
+  </g>
+
+  <g style="fill: var(--nx-accent)">
+    <circle cx="70" cy="350" r="4"></circle>
+    <circle cx="120" cy="220" r="4"></circle>
+    <circle cx="250" cy="260" r="4"></circle>
+    <circle cx="550" cy="180" r="4"></circle>
+  </g>
+
+  <circle
+    cx="390"
+    cy="230"
+    r="6"
+    stroke-width="2"
+    style="fill: var(--nx-on-status); stroke: var(--nx-accent)"
+  ></circle>
+  <circle cx="390" cy="230" r="16" stroke-opacity="0.3" style="stroke: var(--nx-accent)"></circle>
+
+  <circle r="3.5" style="fill: var(--nx-link-hover)">
+    <animateMotion
+      dur="6s"
+      repeatCount="indefinite"
+      path="M70 350 L120 220 L250 260 L390 230 L550 180"
+    ></animateMotion>
+  </circle>
+
+  <g font-family="Geist Mono, monospace" font-size="11" style="fill: var(--nx-text-dim)">
+    <text x="40" y="376">DEP-BA-01</text>
+    <text x="404" y="262" style="fill: var(--nx-link)">HUB-CBA</text>
+    <text x="508" y="164">ENT-4471</text>
+  </g>
+</svg>
