@@ -139,11 +139,29 @@ describe('AuthShell', () => {
   });
 
   describe('D4 — the form panel stays reachable above a 1023x600 viewport', () => {
-    it('aligns to flex-start, NOT center, because a centred overflowing item extends block-start', () => {
+    it('never centres the overflowing item on the cross axis', () => {
       const css = compiledShellCss();
       const panel = /\.form-panel\[[^\]]*\]\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
-      expect(panel).toMatch(/align-items:\s*flex-start/);
+      // `align-items: center` is the defect the design would have shipped: a
+      // flex item centred on the cross axis and OVERFLOWING extends toward
+      // block-start, and overflow toward the start edge does NOT grow the
+      // scrollable overflow area, so the top of the form becomes unreachable.
+      // Assert the ABSENCE of the defect, not the presence of one remedy —
+      // the remedy itself is an implementation detail.
       expect(panel).not.toMatch(/align-items:\s*center/);
+    });
+
+    it('centres the short form with auto margins instead, so it is not pinned to the top', () => {
+      const css = compiledShellCss();
+      const content = /\.form-panel__content\[[^\]]*\]\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+      // `margin: auto` is the safe centring and it is load-bearing in both
+      // directions: a form SHORTER than the panel is optically centred (auto
+      // margins absorb the free space, identical to the design's
+      // `align-items: center`), and a form TALLER than the panel resolves the
+      // auto margins to zero instead of producing negative space, so the
+      // content overflows DOWNWARD — and downward overflow does grow the
+      // scrollable area. That is the half `align-items: center` got wrong.
+      expect(content).toMatch(/margin:\s*auto/);
     });
   });
 });

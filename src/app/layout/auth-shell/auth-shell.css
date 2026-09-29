@@ -140,13 +140,29 @@
   item centred on the cross axis and OVERFLOWING extends toward BLOCK-START —
   and overflow toward the start edge does NOT grow the scrollable overflow area.
   Above roughly 1023x600 the top of the form is therefore unreachable: the user
-  cannot scroll up to it. `flex-start` keeps the top of the form inside the
-  scrollable area. The visible consequence is that a SHORT form sits at the top
-  of its panel rather than optically centred, which is the price of reachability.
+  cannot scroll up to it.
+
+  `align-items: center` is therefore NOT used here, and neither is
+  `flex-start`, which fixes the clipping but leaves a short form sitting at the
+  top of its panel instead of optically centred — visibly wrong on a login
+  screen, which is a page people judge in the first second.
+
+  The resolution is `margin: auto` on the child, and it is load-bearing in both
+  directions:
+
+  - the form is SHORTER than the panel — the auto margins absorb the free space
+    equally on both sides, which is optically identical to `align-items: center`
+    and matches the design;
+  - the form is TALLER than the panel — auto margins resolve to zero instead of
+    producing negative space, so the content starts at the top and overflows
+  DOWNWARD, and downward overflow does grow the scrollable area. The top of the
+  form stays reachable, which is exactly what `align-items: center` broke.
+
+  Do not "simplify" this back to `align-items: center`. It will look right at
+  1440x1024 and become unreachable at roughly 1023x600.
 */
 .form-panel {
   display: flex;
-  align-items: flex-start;
   justify-content: center;
   padding: 56px;
   background-color: var(--nx-panel);
@@ -157,6 +173,8 @@
    itself. A projected component cannot be styled by its parent, so the
    constraint moves to a wrapper — the same geometry, one element earlier. */
 .form-panel__content {
+  /* See the block above: this is the safe centring, not a stylistic margin. */
+  margin: auto;
   width: 100%;
   max-width: 400px;
 }
