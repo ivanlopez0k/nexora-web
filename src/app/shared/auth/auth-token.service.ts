@@ -29,25 +29,42 @@ function decodeJwtPayload(token: string): DecodedToken | null {
 }
 
 /**
- * Manages the active JWT in application memory and extracts claims/roles.
+ * Manages the active JWT access and refresh tokens in application memory,
+ * and extracts claims and roles.
  * Provided in root as an application-level singleton.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthTokenService {
   private readonly tokenState = signal<string | null>(null);
+  private readonly refreshTokenState = signal<string | null>(null);
 
   readonly token: Signal<string | null> = this.tokenState.asReadonly();
+  readonly refreshToken: Signal<string | null> = this.refreshTokenState.asReadonly();
 
   getToken(): string | null {
     return this.tokenState();
+  }
+
+  getRefreshToken(): string | null {
+    return this.refreshTokenState();
   }
 
   setToken(token: string | null): void {
     this.tokenState.set(token);
   }
 
+  setRefreshToken(refreshToken: string | null): void {
+    this.refreshTokenState.set(refreshToken);
+  }
+
+  setTokens(token: string | null, refreshToken: string | null = null): void {
+    this.tokenState.set(token);
+    this.refreshTokenState.set(refreshToken);
+  }
+
   clearToken(): void {
     this.tokenState.set(null);
+    this.refreshTokenState.set(null);
   }
 
   hasToken(): boolean {

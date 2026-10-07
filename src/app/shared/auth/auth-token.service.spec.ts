@@ -17,9 +17,11 @@ describe('AuthTokenService', () => {
     service.clearToken();
   });
 
-  it('starts with a null token', () => {
+  it('starts with a null token and refresh token', () => {
     expect(service.getToken()).toBeNull();
+    expect(service.getRefreshToken()).toBeNull();
     expect(service.token()).toBeNull();
+    expect(service.refreshToken()).toBeNull();
     expect(service.hasToken()).toBe(false);
     expect(service.getClaims()).toBeNull();
     expect(service.getRoles()).toEqual([]);
@@ -32,11 +34,21 @@ describe('AuthTokenService', () => {
     expect(service.hasToken()).toBe(true);
   });
 
-  it('clears token when clearToken is called', () => {
-    service.setToken('jwt-sample-token');
+  it('updates tokens together when setTokens is called', () => {
+    service.setTokens('access-123', 'refresh-456');
+    expect(service.getToken()).toBe('access-123');
+    expect(service.getRefreshToken()).toBe('refresh-456');
+    expect(service.token()).toBe('access-123');
+    expect(service.refreshToken()).toBe('refresh-456');
+  });
+
+  it('clears both tokens when clearToken is called', () => {
+    service.setTokens('jwt-sample-token', 'refresh-token');
     service.clearToken();
     expect(service.getToken()).toBeNull();
+    expect(service.getRefreshToken()).toBeNull();
     expect(service.token()).toBeNull();
+    expect(service.refreshToken()).toBeNull();
     expect(service.hasToken()).toBe(false);
   });
 
