@@ -15,24 +15,25 @@ describe('app.routes', () => {
     const login = find('login');
     expect(login).toBeDefined();
     expect(typeof login?.loadComponent).toBe('function');
-    // Eager would put the form, the shell and the illustration in `initial`
-    // before the user asked for a page.
     expect(login?.component).toBeUndefined();
   });
 
-  it("carries the title with the ACCENT, matching the copy leaf's own spelling", () => {
-    // #438 §10 records a real defect that shipped here: revision 1 wrote
-    // 'Iniciar sesion · Nexora' with no accent, a silent near-duplicate of an
-    // already-ratified leaf. The middle dot is U+00B7.
+  it("carries the login title with the ACCENT, matching the copy leaf's own spelling", () => {
     const title = find('login')?.title;
     expect(title).toBe('Iniciar sesión · Nexora');
     expect(String(title).startsWith(`${copy.auth.common.signIn} ·`)).toBe(true);
   });
 
+  it('routes /register to the wrapper lazily with matching title', () => {
+    const register = find('register');
+    expect(register).toBeDefined();
+    expect(typeof register?.loadComponent).toBe('function');
+    expect(register?.component).toBeUndefined();
+    expect(register?.title).toBe('Crear cuenta · Nexora');
+    expect(String(register?.title).startsWith(`${copy.auth.common.createAccount} ·`)).toBe(true);
+  });
+
   it('ends with a wildcard redirect to login, and it is disclosed as a placeholder', () => {
-    // A wildcard is a product decision and this change contains no 404 page.
-    // It is kept, and kept LAST, because an earlier wildcard would swallow
-    // every route after it.
     const last = routes[routes.length - 1];
     expect(last.path).toBe('**');
     expect(last.redirectTo).toBe('login');
@@ -40,10 +41,6 @@ describe('app.routes', () => {
   });
 
   it('declares no dev gallery route yet, and the gate is not the reason', () => {
-    // Interim, and deliberately so: the gallery route and its isDevMode()
-    // spread ship in the SAME slice as the gallery, so a route that existed
-    // before its component would be a credential-gate hole. Asserting its
-    // absence here is what makes that ordering mistake loud.
     expect(find('dev/auth')).toBeUndefined();
   });
 });
