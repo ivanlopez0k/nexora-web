@@ -1,0 +1,12 @@
+<app-auth-shell>
+  <app-register-form
+    [form]="form"
+    [(status)]="status"
+    [(errors)]="errors"
+    [(focused)]="focused"
+    [(caps)]="caps"
+    [showHint]="showHint()"
+    (submitted)="onSubmitted()"
+    (reset)="onReset()"
+  />
+</app-auth-shell>

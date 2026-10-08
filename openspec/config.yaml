@@ -1,0 +1,47 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Angular 21, TypeScript 5.9, RxJS 7.8, Vitest 4.1 (@angular/build:unit-test)
+  Architecture: Standalone components, feature-sliced layout/features/shared/core
+  Testing: Vitest via Angular CLI (ng test --no-watch)
+  Style: Prettier, strict TypeScript, Conventional Commits
+
+testing:
+  strict_tdd: true
+  projects:
+    - path: "."
+      stack: "Angular 21 + TypeScript + Vitest"
+      test_command: "npx ng test --no-watch"
+      framework: "vitest"
+      unit: true
+      integration: false
+      e2e: false
+      coverage_available: false
+      coverage_command: ""
+      linter: ""
+      type_checker: "npx tsc --noEmit"
+      formatter: "npx prettier --check ."
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+    tdd: true
+    test_command: "npx ng test --no-watch"
+  verify:
+    test_command: "npx ng test --no-watch"
+    build_command: "npx ng build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

@@ -1,0 +1,224 @@
+@if (!isSuccess()) {
+  <form novalidate (submit)="submit($event)">
+    <div class="header">
+      <h1 class="header__title">{{ common.createAccount }}</h1>
+      <p class="header__subtitle">{{ copy.auth.register.subtitle }}</p>
+    </div>
+
+    @if (showError()) {
+      <div class="nx-alert" role="alert">
+        <span class="nx-alert-icon" aria-hidden="true">!</span>
+        <div class="nx-alert-body">
+          <span class="nx-alert-title">{{ copy.auth.register.alertTitle }}</span>
+          <span class="nx-alert-text">
+            {{ copy.auth.register.alertBodyPrefix }}
+            <a routerLink="/login">{{ copy.auth.register.alertBodyLink }}</a>
+            {{ copy.auth.register.alertBodySuffix }}
+          </span>
+        </div>
+      </div>
+    }
+
+    <div class="field">
+      <label class="field__label" [for]="nameId">{{ copy.auth.register.nameLabel }}</label>
+      <input
+        class="nx-field"
+        [id]="nameId"
+        type="text"
+        autocomplete="name"
+        [placeholder]="copy.auth.register.namePlaceholder"
+        [formControl]="form().controls.name"
+        [attr.aria-invalid]="errors().name ? 'true' : null"
+        (input)="onInput('name', $event)"
+        (focus)="focus('name')"
+        (blur)="onNameBlur()"
+      />
+      @if (errors().name; as nameKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('name', nameKey) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" [for]="emailId">{{ common.emailLabel }}</label>
+      <input
+        class="nx-field"
+        [id]="emailId"
+        type="email"
+        autocomplete="email"
+        [placeholder]="common.emailPlaceholder"
+        [formControl]="form().controls.email"
+        [attr.aria-invalid]="errors().email ? 'true' : null"
+        (input)="onInput('email', $event)"
+        (focus)="focus('email')"
+        (blur)="onEmailBlur()"
+      />
+      @if (errors().email; as emailKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('email', emailKey) }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" [for]="passwordId">{{ common.passwordLabel }}</label>
+      <div class="nx-field-control">
+        <input
+          class="nx-field"
+          [id]="passwordId"
+          [type]="pwType()"
+          autocomplete="new-password"
+          [placeholder]="copy.auth.register.passwordPlaceholder"
+          [formControl]="form().controls.password"
+          [attr.aria-invalid]="errors().password ? 'true' : null"
+          [attr.aria-describedby]="showRules() ? rulesId : null"
+          (input)="onInput('password', $event)"
+          (focus)="focus('password')"
+          (blur)="onPasswordBlur()"
+          (keyup)="onCapsKey($event)"
+          (keydown)="onCapsKey($event)"
+        />
+        <button
+          class="nx-field-toggle"
+          type="button"
+          [attr.aria-label]="showLabel()"
+          [disabled]="loading()"
+          (click)="toggleReveal()"
+        >
+          {{ showText() }}
+        </button>
+      </div>
+      @if (errors().password; as passwordKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('password', passwordKey) }}</span>
+        </div>
+      }
+      @if (showCaps()) {
+        <div class="caps">
+          <span class="caps-badge" aria-hidden="true">↑</span>
+          <span>{{ common.capsLock }}</span>
+        </div>
+      }
+      @if (showRules()) {
+        <div class="rules" [id]="rulesId">
+          <div class="rules-bars">
+            @for (rule of rules(); track rule.label) {
+              <div class="rules-bar" [style.background-color]="rule.barColor"></div>
+            }
+          </div>
+          <div class="rules-list">
+            @for (rule of rules(); track rule.label) {
+              <span class="rules-item" [style.color]="rule.color">
+                <span class="rules-mark" aria-hidden="true">{{ rule.mark }}</span>
+                <span>{{ rule.label }}</span>
+              </span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" [for]="confirmId">{{ copy.auth.register.confirmLabel }}</label>
+      <input
+        class="nx-field"
+        [id]="confirmId"
+        [type]="pwType()"
+        autocomplete="new-password"
+        [placeholder]="copy.auth.register.confirmPlaceholder"
+        [formControl]="form().controls.confirm"
+        [attr.aria-invalid]="errors().confirm ? 'true' : null"
+        (input)="onInput('confirm', $event)"
+        (focus)="focus('confirm')"
+        (blur)="onConfirmBlur()"
+      />
+      @if (errors().confirm; as confirmKey) {
+        <div class="nx-inline-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('confirm', confirmKey) }}</span>
+        </div>
+      }
+      @if (isConfirmMatching()) {
+        <div class="confirm-match">
+          <span class="confirm-match-mark" aria-hidden="true">✓</span>
+          <span>{{ copy.auth.register.passwordsMatch }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="field">
+      <label class="terms-label">
+        <input
+          class="terms-checkbox"
+          type="checkbox"
+          [formControl]="form().controls.terms"
+          [attr.aria-invalid]="errors().terms ? 'true' : null"
+          (change)="onTermsChange()"
+        />
+        <span>
+          {{ copy.auth.register.termsPrefix }}
+          <a class="terms-link" href="#" (click)="$event.preventDefault()">{{ copy.auth.register.termsServiceLink }}</a>
+          {{ copy.auth.register.termsConjunction }}
+          <a class="terms-link" href="#" (click)="$event.preventDefault()">{{ copy.auth.register.privacyPolicyLink }}</a>.
+        </span>
+      </label>
+      @if (errors().terms; as termsKey) {
+        <div class="nx-inline-error terms-error">
+          <span class="nx-inline-error-icon" aria-hidden="true">!</span>
+          <span>{{ errorText('terms', termsKey) }}</span>
+        </div>
+      }
+    </div>
+
+    <button
+      class="nx-button"
+      type="submit"
+      [disabled]="loading()"
+      [attr.aria-busy]="loading() ? 'true' : null"
+    >
+      @if (loading()) {
+        <span class="nx-spinner" aria-hidden="true"></span>
+        <span>{{ copy.auth.register.submitting }}</span>
+      } @else {
+        <span>{{ common.createAccount }}</span>
+      }
+    </button>
+  </form>
+
+  <div class="divider nx-divider"></div>
+
+  <p class="crosslink">
+    {{ copy.auth.register.hasAccountQuestion }}
+    <a routerLink="/login">{{ common.signIn }}</a>
+  </p>
+
+  @if (showHint()) {
+    <div class="hint">{{ copy.auth.register.hintLine1 }}<br />{{ copy.auth.register.hintLine2 }}</div>
+  }
+}
+
+@if (isSuccess()) {
+  <div class="success" role="status">
+    <div class="success-disc" aria-hidden="true">✓</div>
+    <div class="success-body">
+      <h1 class="header__title">{{ copy.auth.register.successTitle }}</h1>
+      <p class="header__subtitle">
+        {{ copy.auth.register.successBodyPrefix }}
+        <span class="slot">{{ userFirstName() }}</span>.
+        {{ copy.auth.register.successBodyMiddle }}
+        <span class="slot">{{ form().controls.email.value }}</span>.
+        {{ common.redirecting }}
+      </p>
+    </div>
+    <div class="success-bar nx-bar">
+      <div class="nx-bar-fill"></div>
+    </div>
+    <button class="success-reset" type="button" (click)="onReset()">
+      {{ copy.auth.register.successReset }}
+    </button>
+  </div>
+}

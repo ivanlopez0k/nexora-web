@@ -1,0 +1,34 @@
+<section class="brand">
+  <div class="brand__lockup">
+    <span class="logo-tile"><span class="logo-mark"></span></span>
+    <span class="wordmark">{{ copy.wordmark }}</span>
+  </div>
+
+  <div class="brand__figure">
+    <app-auth-brand-illustration />
+  </div>
+
+  <div class="brand__copy">
+    <h2 class="brand__headline">{{ copy.headline }}</h2>
+    <p class="brand__description">{{ copy.description }}</p>
+  </div>
+
+  <footer class="brand__footer">
+    <span class="brand__version">{{ copy.version }}</span>
+    <span class="brand__status">
+      <span class="brand__dot" aria-hidden="true"></span>
+      {{ copy.status }}
+    </span>
+  </footer>
+</section>
+
+<!--
+  D1: the shell wraps, it does not render the form. The routed content is
+  projected into the form panel and nothing else owns it, so the register
+  wrapper and the dev gallery can reuse this shell unchanged.
+-->
+<section class="form-panel">
+  <div class="form-panel__content">
+    <ng-content />
+  </div>
+</section>
