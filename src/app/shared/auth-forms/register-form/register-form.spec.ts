@@ -239,9 +239,9 @@ describe('RegisterForm', () => {
     it('submits valid form and transitions to loading status', () => {
       render('default');
       host.form.controls.name.setValue('Ana Pérez');
-      host.form.controls.email.setValue('ana@nexora.com');
-      host.form.controls.password.setValue('Nexora2026');
-      host.form.controls.confirm.setValue('Nexora2026');
+      host.form.controls.email.setValue('ana@example.com');
+      host.form.controls.password.setValue('Testing123!');
+      host.form.controls.confirm.setValue('Testing123!');
       host.form.controls.terms.setValue(true);
       fixture.detectChanges();
 
