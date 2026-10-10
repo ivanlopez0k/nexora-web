@@ -1,0 +1,137 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Centros Logísticos</h1>
+      <p class="page-subtitle">Administración de depósitos y nodos de la red logística de Nexora.</p>
+    </div>
+    <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
+      <span>+ Nuevo centro</span>
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="nx-alert" role="alert">
+      <span class="nx-alert-icon">!</span>
+      <div class="alert-body">
+        <span class="nx-alert-title">Error</span>
+        <span class="nx-alert-text">{{ error() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por nombre o provincia…"
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Buscar centros logísticos"
+      />
+    </div>
+
+    <label class="filter-toggle">
+      <input
+        type="checkbox"
+        [checked]="soloActivos()"
+        (change)="onSoloActivosChange($any($event.target).checked)"
+      />
+      <span>Solo activos</span>
+    </label>
+  </section>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <div class="spinner-large" aria-hidden="true"></div>
+        <p>Cargando centros logísticos…</p>
+      </div>
+    } @else if (centros().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">📦</div>
+        <h3>No se encontraron centros</h3>
+        <p>No hay centros logísticos que coincidan con los filtros aplicados.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Provincia</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Fecha creación</th>
+              <th scope="col" class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (centro of centros(); track centro.id) {
+              <tr>
+                <td class="cell-primary">{{ centro.nombre }}</td>
+                <td>{{ centro.provincia }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.badge-active]="centro.estado === 'Activo'"
+                    [class.badge-inactive]="centro.estado !== 'Activo'"
+                  >
+                    {{ centro.estado }}
+                  </span>
+                </td>
+                <td class="cell-date">{{ centro.fechaCreacionUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="cell-actions">
+                  @if (centro.estado === 'Activo') {
+                    <button
+                      type="button"
+                      class="btn-action-delete"
+                      (click)="onDeactivate(centro)"
+                      title="Desactivar centro logístico"
+                    >
+                      Desactivar
+                    </button>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination-footer">
+        <div class="pagination-info">
+          Mostrando {{ centros().length }} de {{ totalItems() }} centros
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onPrevPage()"
+            [disabled]="page() <= 1"
+          >
+            ← Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onNextPage()"
+            [disabled]="page() >= totalPages()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+
+  <app-crear-centro-modal
+    [isOpen]="modalOpen()"
+    [isSubmitting]="modalSubmitting()"
+    [errorMessage]="modalError()"
+    (close)="closeCreateModal()"
+    (submitCentro)="onCreateSubmit($event)"
+  />
+</div>
