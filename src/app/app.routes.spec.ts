@@ -56,6 +56,14 @@ describe('app.routes', () => {
     expect(clientes?.canActivate).toBeDefined();
   });
 
+  it('routes /vehiculos lazily and protects it with authGuard', () => {
+    const vehiculos = find('vehiculos');
+    expect(vehiculos).toBeDefined();
+    expect(typeof vehiculos?.loadComponent).toBe('function');
+    expect(vehiculos?.title).toBe('Vehículos · Nexora');
+    expect(vehiculos?.canActivate).toBeDefined();
+  });
+
   it('declares no dev gallery route yet, and the gate is not the reason', () => {
     expect(find('dev/auth')).toBeUndefined();
   });
