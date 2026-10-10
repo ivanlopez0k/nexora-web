@@ -21,5 +21,11 @@ export const routes: Routes = [
       import('./features/centros-logisticos/centros-logisticos').then((m) => m.CentrosLogisticos),
     title: 'Centros Logísticos · Nexora',
   },
+  {
+    path: 'clientes',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/clientes/clientes').then((m) => m.Clientes),
+    title: 'Clientes · Nexora',
+  },
   { path: '**', redirectTo: 'login' },
 ];

@@ -1,0 +1,100 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="cliente-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="cliente-modal-title" class="modal-title">
+            {{ isEditMode() ? 'Editar cliente' : 'Nuevo cliente' }}
+          </h2>
+          <p class="modal-subtitle">
+            {{ isEditMode() ? 'Modifica los datos del cliente corporativo.' : 'Registra un nuevo cliente corporativo en el sistema.' }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al procesar cliente</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-group">
+          <label for="razon-social-input" class="form-label">Razón social</label>
+          <input
+            id="razon-social-input"
+            type="text"
+            class="nx-field"
+            [class.nx-field-error]="isRazonSocialInvalid()"
+            placeholder="Ej. Distribuidora Pampeana S.A."
+            [ngModel]="razonSocial()"
+            (ngModelChange)="razonSocial.set($event)"
+            name="razonSocial"
+            [disabled]="isSubmitting()"
+            maxlength="200"
+          />
+          @if (isRazonSocialInvalid()) {
+            <span class="nx-inline-error">La razón social es obligatoria.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="cuit-input" class="form-label">CUIT (11 dígitos)</label>
+          <input
+            id="cuit-input"
+            type="text"
+            class="nx-field"
+            [class.nx-field-error]="isCuitInvalid()"
+            placeholder="Ej. 30-50001091-2"
+            [ngModel]="cuit()"
+            (ngModelChange)="cuit.set($event)"
+            (blur)="onCuitBlur()"
+            name="cuit"
+            [disabled]="isSubmitting()"
+            maxlength="13"
+          />
+          @if (isCuitInvalid()) {
+            <span class="nx-inline-error">Ingresa un CUIT válido de AFIP (ej. 30-50001091-2).</span>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>{{ isEditMode() ? 'Actualizar cliente' : 'Crear cliente' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
