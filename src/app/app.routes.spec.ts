@@ -40,6 +40,30 @@ describe('app.routes', () => {
     expect(routes.findIndex((r) => r.path === '**')).toBe(routes.length - 1);
   });
 
+  it('routes /centros-logisticos lazily and protects it with authGuard', () => {
+    const centros = find('centros-logisticos');
+    expect(centros).toBeDefined();
+    expect(typeof centros?.loadComponent).toBe('function');
+    expect(centros?.title).toBe('Centros Logísticos · Nexora');
+    expect(centros?.canActivate).toBeDefined();
+  });
+
+  it('routes /clientes lazily and protects it with authGuard', () => {
+    const clientes = find('clientes');
+    expect(clientes).toBeDefined();
+    expect(typeof clientes?.loadComponent).toBe('function');
+    expect(clientes?.title).toBe('Clientes · Nexora');
+    expect(clientes?.canActivate).toBeDefined();
+  });
+
+  it('routes /vehiculos lazily and protects it with authGuard', () => {
+    const vehiculos = find('vehiculos');
+    expect(vehiculos).toBeDefined();
+    expect(typeof vehiculos?.loadComponent).toBe('function');
+    expect(vehiculos?.title).toBe('Vehículos · Nexora');
+    expect(vehiculos?.canActivate).toBeDefined();
+  });
+
   it('declares no dev gallery route yet, and the gate is not the reason', () => {
     expect(find('dev/auth')).toBeUndefined();
   });

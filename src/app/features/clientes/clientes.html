@@ -1,0 +1,153 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Clientes</h1>
+      <p class="page-subtitle">Gestión de cuentas comerciales, datos fiscales, contactos y direcciones.</p>
+    </div>
+    <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
+      <span>+ Nuevo cliente</span>
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="nx-alert" role="alert">
+      <span class="nx-alert-icon">!</span>
+      <div class="alert-body">
+        <span class="nx-alert-title">Error</span>
+        <span class="nx-alert-text">{{ error() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por razón social o CUIT…"
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Buscar clientes"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="estado-select" class="filter-label">Estado:</label>
+      <select
+        id="estado-select"
+        class="nx-field select-field"
+        [ngModel]="estadoFilter()"
+        (ngModelChange)="onEstadoChange($event)"
+      >
+        <option value="">Todos</option>
+        <option value="ACTIVO">Activos</option>
+        <option value="INACTIVO">Inactivos</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <div class="spinner-large" aria-hidden="true"></div>
+        <p>Cargando clientes…</p>
+      </div>
+    } @else if (clientes().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">🏢</div>
+        <h3>No se encontraron clientes</h3>
+        <p>No hay clientes corporativos que coincidan con la búsqueda.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Razón Social</th>
+              <th scope="col">CUIT</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Contactos</th>
+              <th scope="col">Direcciones</th>
+              <th scope="col">Fecha Alta</th>
+              <th scope="col" class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cliente of clientes(); track cliente.id) {
+              <tr>
+                <td class="cell-primary">{{ cliente.razonSocial }}</td>
+                <td class="cell-cuit">{{ cliente.formattedCuit || cliente.cuit }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.badge-active]="cliente.estado === 'ACTIVO'"
+                    [class.badge-inactive]="cliente.estado !== 'ACTIVO'"
+                  >
+                    {{ cliente.estado }}
+                  </span>
+                </td>
+                <td class="cell-count">{{ cliente.cantidadContactos }}</td>
+                <td class="cell-count">{{ cliente.cantidadDirecciones }}</td>
+                <td class="cell-date">{{ cliente.fechaAlta | date: 'dd/MM/yyyy' }}</td>
+                <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="btn-action-edit"
+                    (click)="openEditModal(cliente)"
+                    title="Editar datos del cliente"
+                  >
+                    Editar
+                  </button>
+                  @if (cliente.estado === 'ACTIVO') {
+                    <button
+                      type="button"
+                      class="btn-action-delete"
+                      (click)="onDeactivate(cliente)"
+                      title="Desactivar cliente"
+                    >
+                      Desactivar
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination-footer">
+        <div class="pagination-info">
+          Mostrando {{ clientes().length }} de {{ totalItems() }} clientes
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onPrevPage()"
+            [disabled]="page() <= 1"
+          >
+            ← Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onNextPage()"
+            [disabled]="page() >= totalPages()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+
+  <app-cliente-modal
+    [isOpen]="modalOpen()"
+    [isSubmitting]="modalSubmitting()"
+    [errorMessage]="modalError()"
+    [clienteToEdit]="selectedCliente()"
+    (close)="closeModal()"
+    (save)="onModalSave($event)"
+  />
+</div>

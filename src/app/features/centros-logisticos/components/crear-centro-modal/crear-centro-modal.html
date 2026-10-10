@@ -1,0 +1,95 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title" class="modal-title">Nuevo centro logístico</h2>
+          <p class="modal-subtitle">Ingresa los datos para registrar el centro en el sistema.</p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al registrar</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-group">
+          <label for="nombre-input" class="form-label">Nombre del centro</label>
+          <input
+            id="nombre-input"
+            type="text"
+            class="nx-field"
+            [class.nx-field-error]="isNombreInvalid()"
+            placeholder="Ej. Centro Distribución Norte"
+            [ngModel]="nombre()"
+            (ngModelChange)="nombre.set($event)"
+            name="nombre"
+            [disabled]="isSubmitting()"
+            maxlength="100"
+          />
+          @if (isNombreInvalid()) {
+            <span class="nx-inline-error">El nombre es obligatorio.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="provincia-input" class="form-label">Provincia</label>
+          <input
+            id="provincia-input"
+            type="text"
+            class="nx-field"
+            [class.nx-field-error]="isProvinciaInvalid()"
+            placeholder="Ej. Buenos Aires"
+            [ngModel]="provincia()"
+            (ngModelChange)="provincia.set($event)"
+            name="provincia"
+            [disabled]="isSubmitting()"
+            maxlength="100"
+          />
+          @if (isProvinciaInvalid()) {
+            <span class="nx-inline-error">La provincia es obligatoria.</span>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>Guardar centro</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
