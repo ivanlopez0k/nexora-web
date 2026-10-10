@@ -48,6 +48,14 @@ describe('app.routes', () => {
     expect(centros?.canActivate).toBeDefined();
   });
 
+  it('routes /clientes lazily and protects it with authGuard', () => {
+    const clientes = find('clientes');
+    expect(clientes).toBeDefined();
+    expect(typeof clientes?.loadComponent).toBe('function');
+    expect(clientes?.title).toBe('Clientes · Nexora');
+    expect(clientes?.canActivate).toBeDefined();
+  });
+
   it('declares no dev gallery route yet, and the gate is not the reason', () => {
     expect(find('dev/auth')).toBeUndefined();
   });
