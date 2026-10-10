@@ -27,5 +27,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/clientes/clientes').then((m) => m.Clientes),
     title: 'Clientes · Nexora',
   },
+  {
+    path: 'vehiculos',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/vehiculos/vehiculos').then((m) => m.Vehiculos),
+    title: 'Vehículos · Nexora',
+  },
   { path: '**', redirectTo: 'login' },
 ];

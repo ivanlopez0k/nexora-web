@@ -1,0 +1,205 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Flota de Vehículos</h1>
+      <p class="page-subtitle">Control de unidades operativas, capacidades de carga y asignación a centros.</p>
+    </div>
+    <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
+      <span>+ Registrar vehículo</span>
+    </button>
+  </header>
+
+  @if (error()) {
+    <div class="nx-alert" role="alert">
+      <span class="nx-alert-icon">!</span>
+      <div class="alert-body">
+        <span class="nx-alert-title">Error</span>
+        <span class="nx-alert-text">{{ error() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por patente, marca o modelo…"
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Buscar vehículos"
+      />
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-item">
+        <label for="tipo-filter" class="filter-label">Tipo:</label>
+        <select
+          id="tipo-filter"
+          class="nx-field select-field"
+          [ngModel]="tipoFilter()"
+          (ngModelChange)="onTipoFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="Camion">Camión</option>
+          <option value="Furgon">Furgón</option>
+          <option value="Utilitario">Utilitario</option>
+          <option value="Acoplado">Acoplado</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="estado-filter" class="filter-label">Estado:</label>
+        <select
+          id="estado-filter"
+          class="nx-field select-field"
+          [ngModel]="estadoFilter()"
+          (ngModelChange)="onEstadoFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          <option value="Disponible">Disponible</option>
+          <option value="EnViaje">En Viaje</option>
+          <option value="EnMantenimiento">En Mantenimiento</option>
+          <option value="Baja">Baja</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="centro-filter" class="filter-label">Centro:</label>
+        <select
+          id="centro-filter"
+          class="nx-field select-field"
+          [ngModel]="centroFilter()"
+          (ngModelChange)="onCentroFilterChange($event)"
+        >
+          <option value="">Todos</option>
+          @for (c of centros(); track c.id) {
+            <option [value]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <div class="spinner-large" aria-hidden="true"></div>
+        <p>Cargando flota de vehículos…</p>
+      </div>
+    } @else if (vehiculos().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">🚚</div>
+        <h3>No se encontraron vehículos</h3>
+        <p>No hay unidades de transporte que coincidan con los filtros aplicados.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Patente</th>
+              <th scope="col">Marca y Modelo</th>
+              <th scope="col">Año</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Capacidad</th>
+              <th scope="col">Kilometraje</th>
+              <th scope="col">Centro Asignado</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (vehiculo of vehiculos(); track vehiculo.id) {
+              <tr>
+                <td class="cell-patente">{{ vehiculo.formattedPatente || vehiculo.patente }}</td>
+                <td class="cell-primary">{{ vehiculo.marca }} {{ vehiculo.modelo }}</td>
+                <td class="cell-muted">{{ vehiculo.anio }}</td>
+                <td>{{ vehiculo.tipo }}</td>
+                <td class="cell-muted">{{ vehiculo.capacidad | number }} kg</td>
+                <td class="cell-muted">{{ vehiculo.kilometraje | number }} km</td>
+                <td>{{ vehiculo.centroLogisticoNombre || '—' }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.badge-disponible]="vehiculo.estado === 'Disponible'"
+                    [class.badge-enviaje]="vehiculo.estado === 'EnViaje'"
+                    [class.badge-mantenimiento]="vehiculo.estado === 'EnMantenimiento'"
+                    [class.badge-baja]="vehiculo.estado === 'Baja'"
+                  >
+                    {{ vehiculo.estado }}
+                  </span>
+                </td>
+                <td class="cell-actions">
+                  @if (vehiculo.estado === 'Disponible') {
+                    <button
+                      type="button"
+                      class="btn-action-small"
+                      (click)="onChangeEstado(vehiculo, 'EnMantenimiento')"
+                      title="Enviar a mantenimiento"
+                    >
+                      Mantenimiento
+                    </button>
+                  } @else if (vehiculo.estado === 'EnMantenimiento') {
+                    <button
+                      type="button"
+                      class="btn-action-small"
+                      (click)="onChangeEstado(vehiculo, 'Disponible')"
+                      title="Marcar como disponible"
+                    >
+                      Habilitar
+                    </button>
+                  }
+                  @if (vehiculo.estado !== 'Baja') {
+                    <button
+                      type="button"
+                      class="btn-action-delete"
+                      (click)="onDelete(vehiculo)"
+                      title="Dar de baja / eliminar"
+                    >
+                      Baja
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination-footer">
+        <div class="pagination-info">
+          Mostrando {{ vehiculos().length }} de {{ totalItems() }} vehículos
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onPrevPage()"
+            [disabled]="page() <= 1"
+          >
+            ← Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onNextPage()"
+            [disabled]="page() >= totalPages()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+
+  <app-crear-vehiculo-modal
+    [isOpen]="modalOpen()"
+    [isSubmitting]="modalSubmitting()"
+    [errorMessage]="modalError()"
+    [centros]="centros()"
+    (close)="closeModal()"
+    (submitVehiculo)="onModalSubmit($event)"
+  />
+</div>

@@ -1,0 +1,207 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="vehiculo-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="vehiculo-modal-title" class="modal-title">Registrar vehículo</h2>
+          <p class="modal-subtitle">Da de alta una nueva unidad de transporte en la flota operativa.</p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al registrar vehículo</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="patente-input" class="form-label">Patente</label>
+            <input
+              id="patente-input"
+              type="text"
+              class="nx-field"
+              [class.nx-field-error]="isPatenteInvalid()"
+              placeholder="Ej. AE 123 CD ó AAA 123"
+              [ngModel]="patente()"
+              (ngModelChange)="patente.set($event)"
+              (blur)="onPatenteBlur()"
+              name="patente"
+              [disabled]="isSubmitting()"
+              maxlength="10"
+            />
+            @if (isPatenteInvalid()) {
+              <span class="nx-inline-error">Patente inválida (AAA 123 o AA 123 BB).</span>
+            }
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="centro-select" class="form-label">Centro logístico</label>
+            <select
+              id="centro-select"
+              class="nx-field select-field"
+              [class.nx-field-error]="isCentroInvalid()"
+              [ngModel]="centroLogisticoId()"
+              (ngModelChange)="centroLogisticoId.set($event)"
+              name="centroLogisticoId"
+              [disabled]="isSubmitting()"
+            >
+              @if (centros().length === 0) {
+                <option value="">No hay centros disponibles</option>
+              }
+              @for (c of centros(); track c.id) {
+                <option [value]="c.id">{{ c.nombre }} ({{ c.provincia }})</option>
+              }
+            </select>
+            @if (isCentroInvalid()) {
+              <span class="nx-inline-error">Debes seleccionar un centro.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="marca-input" class="form-label">Marca</label>
+            <input
+              id="marca-input"
+              type="text"
+              class="nx-field"
+              [class.nx-field-error]="isMarcaInvalid()"
+              placeholder="Ej. Scania"
+              [ngModel]="marca()"
+              (ngModelChange)="marca.set($event)"
+              name="marca"
+              [disabled]="isSubmitting()"
+              maxlength="50"
+            />
+            @if (isMarcaInvalid()) {
+              <span class="nx-inline-error">La marca es obligatoria.</span>
+            }
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="modelo-input" class="form-label">Modelo</label>
+            <input
+              id="modelo-input"
+              type="text"
+              class="nx-field"
+              [class.nx-field-error]="isModeloInvalid()"
+              placeholder="Ej. R450"
+              [ngModel]="modelo()"
+              (ngModelChange)="modelo.set($event)"
+              name="modelo"
+              [disabled]="isSubmitting()"
+              maxlength="50"
+            />
+            @if (isModeloInvalid()) {
+              <span class="nx-inline-error">El modelo es obligatorio.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="anio-input" class="form-label">Año de fabricación</label>
+            <input
+              id="anio-input"
+              type="number"
+              class="nx-field"
+              [ngModel]="anio()"
+              (ngModelChange)="anio.set($event)"
+              name="anio"
+              [disabled]="isSubmitting()"
+              min="1990"
+              max="2030"
+            />
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="tipo-select" class="form-label">Tipo de vehículo</label>
+            <select
+              id="tipo-select"
+              class="nx-field select-field"
+              [ngModel]="tipo()"
+              (ngModelChange)="tipo.set($event)"
+              name="tipo"
+              [disabled]="isSubmitting()"
+            >
+              <option value="Camion">Camión</option>
+              <option value="Furgon">Furgón</option>
+              <option value="Utilitario">Utilitario</option>
+              <option value="Acoplado">Acoplado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="capacidad-input" class="form-label">Capacidad de carga (kg)</label>
+            <input
+              id="capacidad-input"
+              type="number"
+              class="nx-field"
+              [ngModel]="capacidad()"
+              (ngModelChange)="capacidad.set($event)"
+              name="capacidad"
+              [disabled]="isSubmitting()"
+              min="100"
+              step="500"
+            />
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="km-input" class="form-label">Kilometraje inicial (km)</label>
+            <input
+              id="km-input"
+              type="number"
+              class="nx-field"
+              [ngModel]="kilometraje()"
+              (ngModelChange)="kilometraje.set($event)"
+              name="kilometraje"
+              [disabled]="isSubmitting()"
+              min="0"
+            />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>Guardar vehículo</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
