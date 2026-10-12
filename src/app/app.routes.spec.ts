@@ -1,12 +1,22 @@
 import { copy } from './shared/i18n/copy';
 import { routes } from './app.routes';
+import { PERMISSION_MAP } from './shared/auth/permissions';
 import type { Route } from '@angular/router';
 
-const find = (path: string): Route | undefined => routes.find((r) => r.path === path);
+const find = (path: string): Route | undefined => {
+  for (const r of routes) {
+    if (r.path === path) return r;
+    if (r.children) {
+      const child = r.children.find((c) => c.path === path);
+      if (child) return child;
+    }
+  }
+  return undefined;
+};
 
 describe('app.routes', () => {
   it('redirects the empty path to login, and only on a full match', () => {
-    const root = find('');
+    const root = routes.find((r) => r.path === '' && r.pathMatch === 'full');
     expect(root?.redirectTo).toBe('login');
     expect(root?.pathMatch).toBe('full');
   });
@@ -40,28 +50,45 @@ describe('app.routes', () => {
     expect(routes.findIndex((r) => r.path === '**')).toBe(routes.length - 1);
   });
 
-  it('routes /centros-logisticos lazily and protects it with authGuard', () => {
+  it('routes authenticated shell lazily with children and protects it with authGuard', () => {
+    const shellRoute = routes.find((r) => r.children && r.children.length > 0);
+    expect(shellRoute).toBeDefined();
+    expect(shellRoute?.canActivate).toBeDefined();
+    expect(typeof shellRoute?.loadComponent).toBe('function');
+  });
+
+  it('routes /centros-logisticos with authGuard and roles permission map', () => {
     const centros = find('centros-logisticos');
     expect(centros).toBeDefined();
     expect(typeof centros?.loadComponent).toBe('function');
     expect(centros?.title).toBe('Centros Logísticos · Nexora');
     expect(centros?.canActivate).toBeDefined();
+    expect(centros?.data?.['roles']).toEqual(PERMISSION_MAP.centrosLogisticos);
   });
 
-  it('routes /clientes lazily and protects it with authGuard', () => {
+  it('routes /clientes with authGuard and roles permission map', () => {
     const clientes = find('clientes');
     expect(clientes).toBeDefined();
     expect(typeof clientes?.loadComponent).toBe('function');
     expect(clientes?.title).toBe('Clientes · Nexora');
     expect(clientes?.canActivate).toBeDefined();
+    expect(clientes?.data?.['roles']).toEqual(PERMISSION_MAP.clientes);
   });
 
-  it('routes /vehiculos lazily and protects it with authGuard', () => {
+  it('routes /vehiculos with authGuard and roles permission map', () => {
     const vehiculos = find('vehiculos');
     expect(vehiculos).toBeDefined();
     expect(typeof vehiculos?.loadComponent).toBe('function');
     expect(vehiculos?.title).toBe('Vehículos · Nexora');
     expect(vehiculos?.canActivate).toBeDefined();
+    expect(vehiculos?.data?.['roles']).toEqual(PERMISSION_MAP.vehiculos);
+  });
+
+  it('routes /acceso-denegado lazily with matching title', () => {
+    const denied = find('acceso-denegado');
+    expect(denied).toBeDefined();
+    expect(typeof denied?.loadComponent).toBe('function');
+    expect(denied?.title).toBe('Acceso Denegado · Nexora');
   });
 
   it('declares no dev gallery route yet, and the gate is not the reason', () => {

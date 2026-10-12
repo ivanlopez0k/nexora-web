@@ -1,0 +1,71 @@
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-lockup">
+        <span class="logo-tile"><span class="logo-mark"></span></span>
+        <span class="wordmark">Nexora</span>
+      </div>
+      <span class="badge-role">{{ primaryRole() }}</span>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+      <ul class="nav-list">
+        @if (canAccessCentros()) {
+          <li class="nav-item">
+            <a
+              routerLink="/centros-logisticos"
+              routerLinkActive="active"
+              class="nav-link"
+              title="Centros Logísticos"
+            >
+              <span class="nav-icon" aria-hidden="true">🏢</span>
+              <span class="nav-label">Centros Logísticos</span>
+            </a>
+          </li>
+        }
+
+        @if (canAccessClientes()) {
+          <li class="nav-item">
+            <a
+              routerLink="/clientes"
+              routerLinkActive="active"
+              class="nav-link"
+              title="Clientes"
+            >
+              <span class="nav-icon" aria-hidden="true">👥</span>
+              <span class="nav-label">Clientes</span>
+            </a>
+          </li>
+        }
+
+        @if (canAccessVehiculos()) {
+          <li class="nav-item">
+            <a
+              routerLink="/vehiculos"
+              routerLinkActive="active"
+              class="nav-link"
+              title="Flota de Vehículos"
+            >
+              <span class="nav-icon" aria-hidden="true">🚚</span>
+              <span class="nav-label">Vehículos</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <span class="user-email" [title]="userEmail()">{{ userEmail() }}</span>
+      </div>
+      <button type="button" class="btn-logout" (click)="onLogout()" title="Cerrar sesión">
+        <span class="logout-icon" aria-hidden="true">⏻</span>
+        <span>Salir</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>
