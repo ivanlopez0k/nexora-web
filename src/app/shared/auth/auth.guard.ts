@@ -26,9 +26,7 @@ export const authGuard: CanActivateFn = (
   if (expectedRoles && (Array.isArray(expectedRoles) ? expectedRoles.length > 0 : true)) {
     const hasRequiredRole = tokenService.hasRole(expectedRoles);
     if (!hasRequiredRole) {
-      return router.createUrlTree(['/login'], {
-        queryParams: { unauthorized: 'true' },
-      });
+      return router.createUrlTree(['/acceso-denegado']);
     }
   }
 

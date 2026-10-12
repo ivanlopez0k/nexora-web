@@ -61,7 +61,7 @@ describe('authGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('redirects with unauthorized param when user lacks the required role', () => {
+  it('redirects to /acceso-denegado when user lacks the required role', () => {
     const token = createMockJwt({ role: 'OPERADOR' });
     tokenService.setToken(token);
 
@@ -71,6 +71,6 @@ describe('authGuard', () => {
 
     expect(result instanceof UrlTree).toBe(true);
     const tree = result as UrlTree;
-    expect(router.serializeUrl(tree)).toBe('/login?unauthorized=true');
+    expect(router.serializeUrl(tree)).toBe('/acceso-denegado');
   });
 });

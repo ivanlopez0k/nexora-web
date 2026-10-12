@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './shared/auth/auth.guard';
+import { PERMISSION_MAP } from './shared/auth/permissions';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -15,23 +16,39 @@ export const routes: Routes = [
     title: 'Crear cuenta · Nexora',
   },
   {
-    path: 'centros-logisticos',
+    path: '',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/centros-logisticos/centros-logisticos').then((m) => m.CentrosLogisticos),
-    title: 'Centros Logísticos · Nexora',
-  },
-  {
-    path: 'clientes',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/clientes/clientes').then((m) => m.Clientes),
-    title: 'Clientes · Nexora',
-  },
-  {
-    path: 'vehiculos',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/vehiculos/vehiculos').then((m) => m.Vehiculos),
-    title: 'Vehículos · Nexora',
+    loadComponent: () => import('./layout/app-shell/app-shell').then((m) => m.AppShell),
+    children: [
+      {
+        path: 'centros-logisticos',
+        canActivate: [authGuard],
+        data: { roles: PERMISSION_MAP.centrosLogisticos },
+        loadComponent: () =>
+          import('./features/centros-logisticos/centros-logisticos').then((m) => m.CentrosLogisticos),
+        title: 'Centros Logísticos · Nexora',
+      },
+      {
+        path: 'clientes',
+        canActivate: [authGuard],
+        data: { roles: PERMISSION_MAP.clientes },
+        loadComponent: () => import('./features/clientes/clientes').then((m) => m.Clientes),
+        title: 'Clientes · Nexora',
+      },
+      {
+        path: 'vehiculos',
+        canActivate: [authGuard],
+        data: { roles: PERMISSION_MAP.vehiculos },
+        loadComponent: () => import('./features/vehiculos/vehiculos').then((m) => m.Vehiculos),
+        title: 'Vehículos · Nexora',
+      },
+      {
+        path: 'acceso-denegado',
+        loadComponent: () =>
+          import('./features/acceso-denegado/acceso-denegado').then((m) => m.AccesoDenegado),
+        title: 'Acceso Denegado · Nexora',
+      },
+    ],
   },
   { path: '**', redirectTo: 'login' },
 ];
