@@ -3,10 +3,9 @@ import { of, throwError } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { CentrosLogisticos } from './centros-logisticos';
 import { CentroLogisticoService } from './services/centro-logistico.service';
-import type {
-  CentroLogistico,
-  PagedResult,
-} from './models/centro-logistico.models';
+import { DepositoService } from './services/deposito.service';
+import { AuthTokenService } from '../../shared/auth/auth-token.service';
+import type { CentroLogistico, PagedResult } from './models/centro-logistico.models';
 
 describe('CentrosLogisticos Component', () => {
   let component: CentrosLogisticos;
@@ -15,6 +14,17 @@ describe('CentrosLogisticos Component', () => {
     getCentros: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
+  };
+  let mockDepositoService: {
+    getDepositos: ReturnType<typeof vi.fn>;
+    getById: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    cambiarEstado: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+  };
+  let mockTokenService: {
+    getRoles: ReturnType<typeof vi.fn>;
   };
 
   const mockCentros: CentroLogistico[] = [
@@ -51,9 +61,26 @@ describe('CentrosLogisticos Component', () => {
       delete: vi.fn(),
     };
 
+    mockDepositoService = {
+      getDepositos: vi.fn().mockReturnValue(of([])),
+      getById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      cambiarEstado: vi.fn(),
+      delete: vi.fn(),
+    };
+
+    mockTokenService = {
+      getRoles: vi.fn().mockReturnValue(['SUPER_ADMIN']),
+    };
+
     await TestBed.configureTestingModule({
       imports: [CentrosLogisticos],
-      providers: [{ provide: CentroLogisticoService, useValue: mockService }],
+      providers: [
+        { provide: CentroLogisticoService, useValue: mockService },
+        { provide: DepositoService, useValue: mockDepositoService },
+        { provide: AuthTokenService, useValue: mockTokenService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CentrosLogisticos);
@@ -82,7 +109,7 @@ describe('CentrosLogisticos Component', () => {
     expect(component.search()).toBe('Norte');
     expect(component.page()).toBe(1);
     expect(mockService.getCentros).toHaveBeenCalledWith(
-      expect.objectContaining({ search: 'Norte', page: 1 })
+      expect.objectContaining({ search: 'Norte', page: 1 }),
     );
   });
 
@@ -93,7 +120,7 @@ describe('CentrosLogisticos Component', () => {
 
     expect(component.soloActivos()).toBe(true);
     expect(mockService.getCentros).toHaveBeenCalledWith(
-      expect.objectContaining({ soloActivos: true, page: 1 })
+      expect.objectContaining({ soloActivos: true, page: 1 }),
     );
   });
 
@@ -159,5 +186,48 @@ describe('CentrosLogisticos Component', () => {
     component.onDeactivate(mockCentros[0]);
 
     expect(mockService.delete).toHaveBeenCalledWith(mockCentros[0].id);
+  });
+
+  it('evaluates canManageDepositos based on active user roles', () => {
+    mockTokenService.getRoles.mockReturnValue(['SUPER_ADMIN']);
+    expect(component.canManageDepositos()).toBe(true);
+
+    mockTokenService.getRoles.mockReturnValue(['JEFE_DEPOSITO']);
+    expect(component.canManageDepositos()).toBe(true);
+
+    mockTokenService.getRoles.mockReturnValue(['ADMIN_EMPRESA']);
+    expect(component.canManageDepositos()).toBe(true);
+
+    mockTokenService.getRoles.mockReturnValue(['OPERADOR']);
+    expect(component.canManageDepositos()).toBe(false);
+
+    mockTokenService.getRoles.mockReturnValue([]);
+    expect(component.canManageDepositos()).toBe(false);
+  });
+
+  it('opens and closes the depositos modal for a selected centro', () => {
+    expect(component.depositosModalOpen()).toBe(false);
+    expect(component.selectedCentroForDepositos()).toBeNull();
+
+    component.openDepositosModal(mockCentros[0]);
+    expect(component.depositosModalOpen()).toBe(true);
+    expect(component.selectedCentroForDepositos()).toEqual(mockCentros[0]);
+
+    component.closeDepositosModal();
+    expect(component.depositosModalOpen()).toBe(false);
+    expect(component.selectedCentroForDepositos()).toBeNull();
+  });
+
+  it('renders depositos action button in each table row and opens modal on click', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const buttons = compiled.querySelectorAll('.btn-action-depositos');
+
+    expect(buttons.length).toBe(mockCentros.length);
+    expect(buttons[0].textContent).toContain('Depósitos');
+
+    const spy = vi.spyOn(component, 'openDepositosModal');
+    (buttons[0] as HTMLButtonElement).click();
+    expect(spy).toHaveBeenCalledWith(mockCentros[0]);
   });
 });

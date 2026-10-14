@@ -1,0 +1,306 @@
+@if (isOpen && centro) {
+  <div class="modal-backdrop" (click)="onClose()">
+    <div
+      class="modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-dep-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <h2 id="modal-dep-title" class="modal-title">Depósitos del Centro Logístico</h2>
+          <div class="centro-badge-info">
+            <span class="c-nombre">{{ centro.nombre }}</span>
+            <span>·</span>
+            <span class="c-provincia">{{ centro.provincia }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="onClose()"
+          aria-label="Cerrar ventana de depósitos"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="modal-body">
+        @if (error()) {
+          <div class="nx-alert" role="alert">
+            <span class="nx-alert-icon">!</span>
+            <div class="alert-body">
+              <span class="nx-alert-text">{{ error() }}</span>
+            </div>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="nx-alert alert-success" role="status">
+            <span class="nx-alert-icon">✓</span>
+            <div class="alert-body">
+              <span class="nx-alert-text">{{ successMessage() }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- Section: Create or Edit Deposito -->
+        @if (canManage) {
+          <section class="card-section form-section">
+            <h3 class="section-title">
+              {{ editingId() ? '✏️ Modificar depósito' : '➕ Nuevo depósito' }}
+            </h3>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="dep-codigo" class="form-label">Código *</label>
+                <input
+                  type="text"
+                  id="dep-codigo"
+                  class="nx-field"
+                  placeholder="Ej: DEP-SEC-01"
+                  [ngModel]="codigo()"
+                  (ngModelChange)="codigo.set($event)"
+                  maxlength="20"
+                  [disabled]="formSubmitting()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="dep-nombre" class="form-label">Nombre del depósito *</label>
+                <input
+                  type="text"
+                  id="dep-nombre"
+                  class="nx-field"
+                  placeholder="Ej: Depósito Seco A"
+                  [ngModel]="nombre()"
+                  (ngModelChange)="nombre.set($event)"
+                  maxlength="100"
+                  [disabled]="formSubmitting()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="dep-tipo" class="form-label">Tipo de depósito *</label>
+                <select
+                  id="dep-tipo"
+                  class="nx-field select-field"
+                  [ngModel]="tipo()"
+                  (ngModelChange)="tipo.set($event)"
+                  [disabled]="formSubmitting()"
+                >
+                  @for (t of tiposDeposito; track t.value) {
+                    <option [value]="t.value">{{ t.icon }} {{ t.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="dep-capacidad" class="form-label">Capacidad total (m³) *</label>
+                <input
+                  type="number"
+                  id="dep-capacidad"
+                  class="nx-field"
+                  placeholder="Ej: 5000"
+                  min="1"
+                  [ngModel]="capacidadTotalM3()"
+                  (ngModelChange)="capacidadTotalM3.set($event)"
+                  [disabled]="formSubmitting()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="dep-temp-min" class="form-label">Temp. mínima (°C)</label>
+                <input
+                  type="number"
+                  id="dep-temp-min"
+                  class="nx-field"
+                  placeholder="Ej: -20"
+                  [ngModel]="temperaturaMinima()"
+                  (ngModelChange)="temperaturaMinima.set($event)"
+                  [disabled]="formSubmitting()"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="dep-temp-max" class="form-label">Temp. máxima (°C)</label>
+                <input
+                  type="number"
+                  id="dep-temp-max"
+                  class="nx-field"
+                  placeholder="Ej: 5"
+                  [ngModel]="temperaturaMaxima()"
+                  (ngModelChange)="temperaturaMaxima.set($event)"
+                  [disabled]="formSubmitting()"
+                />
+              </div>
+            </div>
+
+            @if (formError()) {
+              <div class="nx-alert" role="alert" style="margin-top: 10px; margin-bottom: 0">
+                <span class="nx-alert-icon">!</span>
+                <div class="alert-body">
+                  <span class="nx-alert-text">{{ formError() }}</span>
+                </div>
+              </div>
+            }
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px">
+              @if (editingId()) {
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  (click)="cancelEdit()"
+                  [disabled]="formSubmitting()"
+                >
+                  Cancelar
+                </button>
+              }
+
+              <button
+                type="button"
+                class="nx-button"
+                style="height: 38px; padding: 0 16px; font-size: 13px"
+                (click)="onSave()"
+                [disabled]="formSubmitting()"
+              >
+                @if (formSubmitting()) {
+                  <span>Guardando...</span>
+                } @else if (editingId()) {
+                  <span>Actualizar depósito</span>
+                } @else {
+                  <span>+ Crear depósito</span>
+                }
+              </button>
+            </div>
+          </section>
+        }
+
+        <!-- Section: Depositos List -->
+        <section class="card-section">
+          <div class="section-header-row">
+            <h3 class="section-title">📦 Depósitos registrados ({{ depositos().length }})</h3>
+            <button
+              type="button"
+              class="btn-refresh"
+              (click)="loadDepositos()"
+              [disabled]="loading()"
+              title="Refrescar lista"
+            >
+              🔄 Actualizar
+            </button>
+          </div>
+
+          @if (loading()) {
+            <div class="loading-state" role="status">
+              <span>Cargando depósitos del centro logístico...</span>
+            </div>
+          } @else if (depositos().length === 0) {
+            <div class="empty-depositos-state">
+              <span class="empty-icon">🏬</span>
+              <p class="empty-title">Sin depósitos registrados</p>
+              <p class="empty-subtitle">
+                No hay depósitos dados de alta para este centro logístico.
+                @if (canManage) {
+                  Utilizá el formulario de arriba para registrar el primer depósito.
+                }
+              </p>
+            </div>
+          } @else {
+            <div class="depositos-list">
+              @for (dep of depositos(); track dep.id) {
+                <article class="deposito-card">
+                  <div class="deposito-main-info">
+                    <div class="deposito-title-row">
+                      <span class="deposito-codigo">{{ dep.codigo }}</span>
+                      <strong class="deposito-nombre">{{ dep.nombre }}</strong>
+                      <span
+                        class="status-badge"
+                        [class.badge-activo]="dep.estado === 'Activo'"
+                        [class.badge-inactivo]="dep.estado === 'Inactivo'"
+                        [class.badge-mantenimiento]="dep.estado === 'Mantenimiento'"
+                      >
+                        {{ dep.estado }}
+                      </span>
+                    </div>
+
+                    <div class="deposito-meta-row">
+                      <span class="deposito-tipo">
+                        {{ getTipoInfo(dep.tipo).icon }} {{ getTipoInfo(dep.tipo).label }}
+                      </span>
+                      <span>·</span>
+                      <span class="deposito-capacidad">
+                        <strong>Capacidad:</strong> {{ dep.capacidadTotalM3 | number }} m³
+                      </span>
+                      <span>·</span>
+                      <span class="deposito-temperatura">
+                        @if (
+                          dep.temperaturaMinima !== null &&
+                          dep.temperaturaMinima !== undefined &&
+                          dep.temperaturaMaxima !== null &&
+                          dep.temperaturaMaxima !== undefined
+                        ) {
+                          🌡️ {{ dep.temperaturaMinima }}°C a {{ dep.temperaturaMaxima }}°C
+                        } @else if (
+                          dep.temperaturaMaxima !== null && dep.temperaturaMaxima !== undefined
+                        ) {
+                          🌡️ Hasta {{ dep.temperaturaMaxima }}°C
+                        } @else {
+                          🌡️ Ambiente
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="deposito-actions">
+                    @if (canManage) {
+                      <button
+                        type="button"
+                        class="btn-action-small btn-edit"
+                        (click)="startEdit(dep)"
+                        title="Modificar depósito"
+                      >
+                        ✏️ Editar
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn-action-small btn-toggle"
+                        (click)="onToggleEstado(dep)"
+                        [disabled]="changingEstadoId() === dep.id"
+                        [title]="
+                          dep.estado === 'Activo' ? 'Desactivar depósito' : 'Activar depósito'
+                        "
+                      >
+                        @if (dep.estado === 'Activo') {
+                          ⏸️ Desactivar
+                        } @else {
+                          ▶️ Activar
+                        }
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn-action-delete"
+                        (click)="onDelete(dep)"
+                        [disabled]="deletingId() === dep.id"
+                        title="Dar de baja depósito"
+                      >
+                        🗑️ Baja
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onClose()">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+}

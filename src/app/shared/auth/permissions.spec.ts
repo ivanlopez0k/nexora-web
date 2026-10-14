@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROLES, PERMISSION_MAP, hasAnyRole } from './permissions';
+import { ROLES, PERMISSION_MAP, WRITE_PERMISSION_MAP, hasAnyRole } from './permissions';
 
 describe('permissions matrix', () => {
   it('defines canonical system roles', () => {
@@ -8,6 +8,7 @@ describe('permissions matrix', () => {
     expect(ROLES.OPERADOR_LOGISTICO).toBe('OPERADOR_LOGISTICO');
     expect(ROLES.ADMINISTRACION).toBe('ADMINISTRACION');
     expect(ROLES.CHOFER).toBe('CHOFER');
+    expect(ROLES.JEFE_DEPOSITO).toBe('JEFE_DEPOSITO');
   });
 
   it('maps sections to corresponding authorized roles', () => {
@@ -20,6 +21,12 @@ describe('permissions matrix', () => {
 
     expect(PERMISSION_MAP.vehiculos).toContain(ROLES.OPERADOR_LOGISTICO);
     expect(PERMISSION_MAP.vehiculos).not.toContain(ROLES.ADMINISTRACION);
+
+    expect(WRITE_PERMISSION_MAP.depositos).toEqual([
+      ROLES.SUPER_ADMIN,
+      ROLES.ADMIN_EMPRESA,
+      ROLES.JEFE_DEPOSITO,
+    ]);
   });
 
   describe('hasAnyRole', () => {

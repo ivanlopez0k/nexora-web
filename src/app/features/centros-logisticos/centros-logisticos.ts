@@ -2,21 +2,22 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CentroLogisticoService } from './services/centro-logistico.service';
+import { AuthTokenService } from '../../shared/auth/auth-token.service';
+import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions';
 import { CrearCentroModal } from './components/crear-centro-modal/crear-centro-modal';
-import type {
-  CentroLogistico,
-  PagedResult,
-} from './models/centro-logistico.models';
+import { DepositosModal } from './components/depositos-modal/depositos-modal';
+import type { CentroLogistico, PagedResult } from './models/centro-logistico.models';
 
 @Component({
   selector: 'app-centros-logisticos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CrearCentroModal],
+  imports: [CommonModule, FormsModule, CrearCentroModal, DepositosModal],
   templateUrl: './centros-logisticos.html',
   styleUrl: './centros-logisticos.css',
 })
 export class CentrosLogisticos implements OnInit {
   private readonly service = inject(CentroLogisticoService);
+  private readonly tokenService = inject(AuthTokenService);
 
   readonly centros = signal<CentroLogistico[]>([]);
   readonly loading = signal<boolean>(false);
@@ -30,10 +31,32 @@ export class CentrosLogisticos implements OnInit {
   readonly totalPages = signal<number>(1);
   readonly totalItems = signal<number>(0);
 
-  // Modal state
+  // Create Modal state
   readonly modalOpen = signal<boolean>(false);
   readonly modalSubmitting = signal<boolean>(false);
   readonly modalError = signal<string | null>(null);
+
+  // Depositos Modal state
+  readonly depositosModalOpen = signal<boolean>(false);
+  readonly selectedCentroForDepositos = signal<CentroLogistico | null>(null);
+
+  canManageDepositos(): boolean {
+    return hasAnyRole(this.tokenService.getRoles(), WRITE_PERMISSION_MAP.depositos);
+  }
+
+  openDepositosModal(centro: CentroLogistico): void {
+    this.selectedCentroForDepositos.set(centro);
+    this.depositosModalOpen.set(true);
+  }
+
+  closeDepositosModal(): void {
+    this.depositosModalOpen.set(false);
+    this.selectedCentroForDepositos.set(null);
+  }
+
+  onDepositosChange(): void {
+    // Optional refresh if centers count or statistics are influenced
+  }
 
   ngOnInit(): void {
     this.loadCentros();
