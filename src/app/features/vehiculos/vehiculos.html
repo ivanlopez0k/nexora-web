@@ -131,6 +131,14 @@
                   </span>
                 </td>
                 <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="btn-action-small btn-action-docs"
+                    (click)="openDocsModal(vehiculo)"
+                    title="Ver y gestionar documentación del vehículo"
+                  >
+                    📄 Documentos
+                  </button>
                   @if (vehiculo.estado === 'Disponible') {
                     <button
                       type="button"
@@ -201,5 +209,13 @@
     [centros]="centros()"
     (close)="closeModal()"
     (submitVehiculo)="onModalSubmit($event)"
+  />
+
+  <app-documentos-vehiculo-modal
+    [isOpen]="docsModalOpen()"
+    [vehiculo]="selectedVehiculoForDocs()"
+    [canManage]="canManage()"
+    (close)="closeDocsModal()"
+    (documentChange)="onDocumentChange()"
   />
 </div>

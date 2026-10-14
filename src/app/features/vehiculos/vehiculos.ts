@@ -3,7 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VehiculoService } from './services/vehiculo.service';
 import { CentroLogisticoService } from '../centros-logisticos/services/centro-logistico.service';
+import { AuthTokenService } from '../../shared/auth/auth-token.service';
+import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions';
 import { CrearVehiculoModal } from './components/crear-vehiculo-modal/crear-vehiculo-modal';
+import { DocumentosVehiculoModal } from './components/documentos-vehiculo-modal/documentos-vehiculo-modal';
 import type {
   Vehiculo,
   CrearVehiculoRequest,
@@ -14,13 +17,14 @@ import type { CentroLogistico } from '../centros-logisticos/models/centro-logist
 @Component({
   selector: 'app-vehiculos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CrearVehiculoModal],
+  imports: [CommonModule, FormsModule, CrearVehiculoModal, DocumentosVehiculoModal],
   templateUrl: './vehiculos.html',
   styleUrl: './vehiculos.css',
 })
 export class Vehiculos implements OnInit {
   private readonly vehiculoService = inject(VehiculoService);
   private readonly centroService = inject(CentroLogisticoService);
+  private readonly tokenService = inject(AuthTokenService);
 
   readonly vehiculos = signal<Vehiculo[]>([]);
   readonly centros = signal<CentroLogistico[]>([]);
@@ -37,10 +41,32 @@ export class Vehiculos implements OnInit {
   readonly totalPages = signal<number>(1);
   readonly totalItems = signal<number>(0);
 
-  // Modal state
+  // Create Modal state
   readonly modalOpen = signal<boolean>(false);
   readonly modalSubmitting = signal<boolean>(false);
   readonly modalError = signal<string | null>(null);
+
+  // Documents Modal state
+  readonly docsModalOpen = signal<boolean>(false);
+  readonly selectedVehiculoForDocs = signal<Vehiculo | null>(null);
+
+  canManage(): boolean {
+    return hasAnyRole(this.tokenService.getRoles(), WRITE_PERMISSION_MAP.vehiculos);
+  }
+
+  openDocsModal(vehiculo: Vehiculo): void {
+    this.selectedVehiculoForDocs.set(vehiculo);
+    this.docsModalOpen.set(true);
+  }
+
+  closeDocsModal(): void {
+    this.docsModalOpen.set(false);
+    this.selectedVehiculoForDocs.set(null);
+  }
+
+  onDocumentChange(): void {
+    // Keeps list synced if vehicle status is influenced
+  }
 
   ngOnInit(): void {
     this.loadCentros();

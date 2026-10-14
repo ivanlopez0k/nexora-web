@@ -1,0 +1,303 @@
+@if (isOpen && vehiculo) {
+  <div class="modal-backdrop" (click)="onClose()">
+    <div
+      class="modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-doc-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <h2 id="modal-doc-title" class="modal-title">Documentación del Vehículo</h2>
+          <div class="vehicle-badge-info">
+            <span class="v-patente">{{ vehiculo.formattedPatente || vehiculo.patente }}</span>
+            <span>·</span>
+            <span>{{ vehiculo.marca }} {{ vehiculo.modelo }}</span>
+            <span>·</span>
+            <span>{{ vehiculo.tipo }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="onClose()"
+          aria-label="Cerrar ventana de documentos"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="modal-body">
+        @if (error()) {
+          <div class="nx-alert" role="alert">
+            <span class="nx-alert-icon">!</span>
+            <div class="alert-body">
+              <span class="nx-alert-text">{{ error() }}</span>
+            </div>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="nx-alert alert-success" role="status">
+            <span class="nx-alert-icon">✓</span>
+            <div class="alert-body">
+              <span class="nx-alert-text">{{ successMessage() }}</span>
+            </div>
+          </div>
+        }
+
+        @if (canManage) {
+          <section class="card-section upload-section">
+            <h3 class="section-title">📤 Subir nuevo documento</h3>
+
+            <div
+              class="dropzone"
+              [class.dragging]="isDragging()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+            >
+              <input
+                type="file"
+                id="doc-file-input"
+                class="file-input-hidden"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                (change)="onFileChange($event)"
+              />
+
+              @if (!selectedFile()) {
+                <label for="doc-file-input">
+                  <span class="dropzone-icon">📁</span>
+                  <span><strong>Hacé clic para seleccionar</strong> o arrastrá el archivo aquí</span>
+                  <small>Formatos: PDF, PNG, JPG / JPEG (máx. 5 MB)</small>
+                </label>
+              } @else {
+                <div class="selected-file-card">
+                  <div class="file-info">
+                    <span>📄</span>
+                    <div>
+                      <span class="file-name">{{ selectedFile()?.name }}</span>
+                      <span class="file-size">{{ formatFileSize(selectedFile()?.size || 0) }}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-remove-file"
+                    (click)="removeSelectedFile()"
+                    [disabled]="uploading()"
+                    title="Quitar archivo"
+                  >
+                    ✕
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (selectedFileError()) {
+              <p class="field-error-text">{{ selectedFileError() }}</p>
+            }
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="doc-tipo" class="form-label">Tipo de documento *</label>
+                <select
+                  id="doc-tipo"
+                  class="nx-field select-field"
+                  [ngModel]="tipo()"
+                  (ngModelChange)="tipo.set($event)"
+                  [disabled]="uploading()"
+                >
+                  @for (t of tiposDocumento; track t.value) {
+                    <option [value]="t.value">{{ t.icon }} {{ t.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="doc-numero" class="form-label">Número de documento</label>
+                <input
+                  type="text"
+                  id="doc-numero"
+                  class="nx-field"
+                  placeholder="Ej: POL-2026-998"
+                  [ngModel]="numeroDocumento()"
+                  (ngModelChange)="numeroDocumento.set($event)"
+                  maxlength="100"
+                  [disabled]="uploading()"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="doc-emision" class="form-label">Fecha de emisión</label>
+                <input
+                  type="date"
+                  id="doc-emision"
+                  class="nx-field"
+                  [ngModel]="fechaEmision()"
+                  (ngModelChange)="fechaEmision.set($event)"
+                  [disabled]="uploading()"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="doc-vencimiento" class="form-label">Fecha de vencimiento</label>
+                <input
+                  type="date"
+                  id="doc-vencimiento"
+                  class="nx-field"
+                  [ngModel]="fechaVencimiento()"
+                  (ngModelChange)="fechaVencimiento.set($event)"
+                  [disabled]="uploading()"
+                >
+              </div>
+            </div>
+
+            @if (uploadProgress() > 0 && uploading()) {
+              <div class="progress-container">
+                <div class="progress-bar-bg">
+                  <div class="progress-bar-fill" [style.width.%]="uploadProgress()"></div>
+                </div>
+                <span class="progress-text">Subiendo archivo... {{ uploadProgress() }}%</span>
+              </div>
+            }
+
+            @if (uploadError()) {
+              <div class="nx-alert" role="alert">
+                <span class="nx-alert-icon">!</span>
+                <div class="alert-body"><span class="nx-alert-text">{{ uploadError() }}</span></div>
+              </div>
+            }
+
+            <div style="display:flex;justify-content:flex-end;margin-top:8px">
+              <button
+                type="button"
+                class="nx-button"
+                style="height: 40px; padding: 0 16px; font-size: 13px;"
+                (click)="onSubmitUpload()"
+                [disabled]="uploading() || !selectedFile()"
+              >
+                @if (uploading()) {
+                  <span>Subiendo...</span>
+                } @else {
+                  <span>+ Adjuntar documento</span>
+                }
+              </button>
+            </div>
+          </section>
+        }
+
+        <section class="card-section">
+          <div class="section-header-row">
+            <h3 class="section-title">📋 Documentos registrados ({{ documentos().length }})</h3>
+            <button
+              type="button"
+              class="btn-refresh"
+              (click)="loadDocumentos()"
+              [disabled]="loading()"
+              title="Refrescar lista"
+            >
+              🔄 Actualizar
+            </button>
+          </div>
+
+          @if (loading()) {
+            <div class="loading-state" role="status">
+              <span>Cargando documentos de la unidad...</span>
+            </div>
+          } @else if (documentos().length === 0) {
+            <div class="empty-docs-state">
+              <span class="empty-icon">📂</span>
+              <p class="empty-title">Sin documentación registrada</p>
+              <p class="empty-subtitle">
+                No hay archivos adjuntos para este vehículo.
+                @if (canManage) {
+                  Utilizá el formulario de arriba para cargar la Cédula Verde, VTV o Póliza de seguro.
+                }
+              </p>
+            </div>
+          } @else {
+            <div class="docs-list">
+              @for (doc of documentos(); track doc.id) {
+                <article class="doc-card">
+                  <div class="doc-main-info">
+                    <div class="doc-type-badge-row">
+                      <span class="doc-type-label">
+                        {{ getTipoInfo(doc.tipo).icon }} {{ getTipoInfo(doc.tipo).label }}
+                      </span>
+                      @if (doc.numeroDocumento) {
+                        <span class="doc-number">#{{ doc.numeroDocumento }}</span>
+                      }
+                      <span
+                        class="expiration-badge"
+                        [ngClass]="getExpirationBadge(doc).cssClass"
+                      >
+                        {{ getExpirationBadge(doc).label }}
+                      </span>
+                    </div>
+
+                    <div class="doc-file-meta">
+                      <span class="doc-file-name" [title]="doc.nombreArchivoOriginal">
+                        📎 {{ doc.nombreArchivoOriginal }}
+                      </span>
+                      <span>({{ formatFileSize(doc.tamanoBytes) }})</span>
+                    </div>
+
+                    <div class="doc-dates-row">
+                      @if (doc.fechaEmision) {
+                        <span><strong>Emisión:</strong> {{ doc.fechaEmision | date: 'dd/MM/yyyy' }}</span>
+                      }
+                      @if (doc.fechaVencimiento) {
+                        <span><strong>Vence:</strong> {{ doc.fechaVencimiento | date: 'dd/MM/yyyy' }}</span>
+                      } @else {
+                        <span class="doc-no-exp">Sin vencimiento</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="doc-actions">
+                    <button
+                      type="button"
+                      class="btn-doc-download"
+                      (click)="onDownload(doc)"
+                      [disabled]="downloadingId() === doc.id"
+                      title="Descargar archivo"
+                    >
+                      @if (downloadingId() === doc.id) {
+                        <span>Descargando...</span>
+                      } @else {
+                        ⬇️ Descargar
+                      }
+                    </button>
+
+                    @if (canManage) {
+                      <button
+                        type="button"
+                        class="btn-doc-delete"
+                        (click)="onDelete(doc)"
+                        [disabled]="deletingId() === doc.id"
+                        title="Dar de baja documento"
+                      >
+                        @if (deletingId() === doc.id) {
+                          <span>Eliminando...</span>
+                        } @else {
+                          🗑️ Dar de baja
+                        }
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onClose()">
+          Cerrar
+        </button>
+      </footer>
+    </div>
+  </div>
+}

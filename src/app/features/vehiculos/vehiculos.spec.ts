@@ -4,6 +4,8 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Vehiculos } from './vehiculos';
 import { VehiculoService } from './services/vehiculo.service';
 import { CentroLogisticoService } from '../centros-logisticos/services/centro-logistico.service';
+import { AuthTokenService } from '../../shared/auth/auth-token.service';
+import { VehiculoDocumentoService } from './services/vehiculo-documento.service';
 import type {
   Vehiculo,
   PagedResult,
@@ -24,6 +26,17 @@ describe('Vehiculos Component', () => {
 
   let mockCentroService: {
     getCentros: ReturnType<typeof vi.fn>;
+  };
+
+  let mockTokenService: {
+    getRoles: ReturnType<typeof vi.fn>;
+  };
+
+  let mockDocumentoService: {
+    getDocumentos: ReturnType<typeof vi.fn>;
+    subirDocumento: ReturnType<typeof vi.fn>;
+    descargarArchivo: ReturnType<typeof vi.fn>;
+    darDeBaja: ReturnType<typeof vi.fn>;
   };
 
   const mockVehiculos: Vehiculo[] = [
@@ -91,11 +104,24 @@ describe('Vehiculos Component', () => {
       getCentros: vi.fn().mockReturnValue(of({ items: mockCentros, totalItems: 1, totalPages: 1 })),
     };
 
+    mockTokenService = {
+      getRoles: vi.fn().mockReturnValue(['SUPER_ADMIN']),
+    };
+
+    mockDocumentoService = {
+      getDocumentos: vi.fn().mockReturnValue(of([])),
+      subirDocumento: vi.fn(),
+      descargarArchivo: vi.fn(),
+      darDeBaja: vi.fn(),
+    };
+
     await TestBed.configureTestingModule({
       imports: [Vehiculos],
       providers: [
         { provide: VehiculoService, useValue: mockVehiculoService },
         { provide: CentroLogisticoService, useValue: mockCentroService },
+        { provide: AuthTokenService, useValue: mockTokenService },
+        { provide: VehiculoDocumentoService, useValue: mockDocumentoService },
       ],
     }).compileComponents();
 
@@ -299,4 +325,43 @@ describe('Vehiculos Component', () => {
     expect(component.loading()).toBe(false);
     expect(component.error()).toBe('No se pudieron cargar los vehículos. Intenta nuevamente.');
   });
+
+  it('opens and closes documents modal for a vehicle', () => {
+    fixture.detectChanges();
+
+    component.openDocsModal(mockVehiculos[0]);
+    expect(component.docsModalOpen()).toBe(true);
+    expect(component.selectedVehiculoForDocs()).toEqual(mockVehiculos[0]);
+
+    component.closeDocsModal();
+    expect(component.docsModalOpen()).toBe(false);
+    expect(component.selectedVehiculoForDocs()).toBeNull();
+  });
+
+  it('renders Documentos action button and opens modal on click', () => {
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const docsBtns = compiled.querySelectorAll('.btn-action-docs');
+    expect(docsBtns.length).toBe(2);
+
+    (docsBtns[0] as HTMLButtonElement).click();
+    expect(component.docsModalOpen()).toBe(true);
+    expect(component.selectedVehiculoForDocs()?.id).toBe('veh-1');
+  });
+
+  it('evaluates canManage correctly based on user roles', () => {
+    mockTokenService.getRoles.mockReturnValue(['OPERADOR_LOGISTICO']);
+    expect(component.canManage()).toBe(true);
+
+    mockTokenService.getRoles.mockReturnValue(['ADMIN_EMPRESA']);
+    expect(component.canManage()).toBe(true);
+
+    mockTokenService.getRoles.mockReturnValue(['SUPERVISOR']);
+    expect(component.canManage()).toBe(false);
+
+    mockTokenService.getRoles.mockReturnValue(['CHOFER']);
+    expect(component.canManage()).toBe(false);
+  });
 });
+
