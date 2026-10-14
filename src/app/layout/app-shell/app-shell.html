@@ -65,6 +65,20 @@
             </a>
           </li>
         }
+
+        @if (canAccessChoferes()) {
+          <li class="nav-item">
+            <a
+              routerLink="/choferes"
+              routerLinkActive="active"
+              class="nav-link"
+              title="Choferes y Habilitaciones"
+            >
+              <span class="nav-icon" aria-hidden="true">🪪</span>
+              <span class="nav-label">Choferes</span>
+            </a>
+          </li>
+        }
       </ul>
     </nav>
 

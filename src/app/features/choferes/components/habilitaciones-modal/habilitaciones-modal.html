@@ -1,0 +1,76 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="habilitaciones-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="habilitaciones-title" class="modal-title">Habilitaciones vehiculares</h2>
+          <p class="modal-subtitle">
+            Selecciona las categorías de vehículos autorizadas para <strong>{{ chofer()?.empleadoNombre }}</strong> (Licencia: {{ chofer()?.numeroLicencia }}).
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al actualizar habilitaciones</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" class="modal-form">
+        <div class="form-group">
+          <span class="form-label">Categorías habilitadas</span>
+          <div class="checkbox-grid">
+            @for (tipo of tiposVehiculo; track tipo) {
+              <label class="checkbox-item">
+                <input
+                  type="checkbox"
+                  [checked]="isHabilitacionSelected(tipo)"
+                  (change)="toggleHabilitacion(tipo)"
+                  [disabled]="isSubmitting()"
+                />
+                <span>{{ tipo }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>Guardar habilitaciones</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
