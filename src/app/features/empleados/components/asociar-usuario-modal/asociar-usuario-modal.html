@@ -1,0 +1,78 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="asociar-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="asociar-modal-title" class="modal-title">Asociar cuenta de usuario</h2>
+          <p class="modal-subtitle">
+            Vincula un usuario del sistema (UUID) al empleado <strong>{{ empleado()?.nombre }}</strong> (Legajo: {{ empleado()?.legajo }}).
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al vincular usuario</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-group">
+          <label for="usuario-id-input" class="form-label">ID de Usuario (UUID v4)</label>
+          <input
+            id="usuario-id-input"
+            type="text"
+            class="nx-field"
+            [class.nx-field-error]="isUsuarioIdInvalid()"
+            placeholder="Ej. e7b53fa9-8392-4d22-ba3f-912df0f65d64"
+            [ngModel]="usuarioId()"
+            (ngModelChange)="usuarioId.set($event)"
+            name="usuarioId"
+            [disabled]="isSubmitting()"
+            maxlength="36"
+          />
+          @if (isUsuarioIdInvalid()) {
+            <span class="nx-inline-error">Ingresa un formato de UUID válido (ej. 12345678-1234-1234-1234-123456789abc).</span>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>Vincular usuario</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

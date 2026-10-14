@@ -43,6 +43,13 @@ export const routes: Routes = [
         title: 'Vehículos · Nexora',
       },
       {
+        path: 'empleados',
+        canActivate: [authGuard],
+        data: { roles: PERMISSION_MAP.empleados },
+        loadComponent: () => import('./features/empleados/empleados').then((m) => m.Empleados),
+        title: 'Empleados · Nexora',
+      },
+      {
         path: 'acceso-denegado',
         loadComponent: () =>
           import('./features/acceso-denegado/acceso-denegado').then((m) => m.AccesoDenegado),

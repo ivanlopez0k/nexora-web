@@ -84,6 +84,15 @@ describe('app.routes', () => {
     expect(vehiculos?.data?.['roles']).toEqual(PERMISSION_MAP.vehiculos);
   });
 
+  it('routes /empleados with authGuard and roles permission map', () => {
+    const empleados = find('empleados');
+    expect(empleados).toBeDefined();
+    expect(typeof empleados?.loadComponent).toBe('function');
+    expect(empleados?.title).toBe('Empleados · Nexora');
+    expect(empleados?.canActivate).toBeDefined();
+    expect(empleados?.data?.['roles']).toEqual(PERMISSION_MAP.empleados);
+  });
+
   it('routes /acceso-denegado lazily with matching title', () => {
     const denied = find('acceso-denegado');
     expect(denied).toBeDefined();
