@@ -35,6 +35,8 @@
 .cell-actions { justify-content: flex-end; gap: 8px; }
 .btn-action-small, .btn-action-delete, .btn-page { padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; background: transparent; transition: all var(--nx-transition-fast); border: 1px solid var(--nx-border); color: var(--nx-text); }
 .btn-action-small:hover, .btn-page:hover:not(:disabled) { background-color: var(--nx-border-subtle); border-color: var(--nx-accent); }
+.btn-action-docs { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; }
+.btn-action-docs:hover { background-color: rgba(56, 189, 248, 0.1); border-color: #38bdf8; }
 .btn-action-delete { border-color: rgba(229, 72, 77, 0.4); color: var(--nx-error-text); }
 .btn-action-delete:hover { background-color: var(--nx-error-bg); color: var(--nx-error); }
 .btn-page { padding: 6px 12px; }
