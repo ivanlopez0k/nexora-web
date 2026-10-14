@@ -28,6 +28,10 @@ export class AppShell {
     return hasAnyRole(this.tokenService.getRoles(), PERMISSION_MAP.vehiculos);
   }
 
+  canAccessEmpleados(): boolean {
+    return hasAnyRole(this.tokenService.getRoles(), PERMISSION_MAP.empleados);
+  }
+
   userEmail(): string {
     const claims = this.tokenService.getClaims();
     return claims?.email ?? 'usuario@nexora.com';

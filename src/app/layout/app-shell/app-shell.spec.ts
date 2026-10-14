@@ -36,16 +36,17 @@ describe('AppShell Layout Component', () => {
     component = fixture.componentInstance;
   });
 
-  it('renders all three navigation links for SUPER_ADMIN', () => {
+  it('renders all four navigation links for SUPER_ADMIN', () => {
     mockTokenService.getRoles.mockReturnValue(['SUPER_ADMIN']);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
-    expect(links.length).toBe(3);
+    expect(links.length).toBe(4);
     expect(component.canAccessCentros()).toBe(true);
     expect(component.canAccessClientes()).toBe(true);
     expect(component.canAccessVehiculos()).toBe(true);
+    expect(component.canAccessEmpleados()).toBe(true);
   });
 
   it('renders only Vehiculos for OPERADOR_LOGISTICO', () => {
@@ -59,6 +60,7 @@ describe('AppShell Layout Component', () => {
     expect(component.canAccessCentros()).toBe(false);
     expect(component.canAccessClientes()).toBe(false);
     expect(component.canAccessVehiculos()).toBe(true);
+    expect(component.canAccessEmpleados()).toBe(false);
   });
 
   it('renders only Clientes for ADMINISTRACION', () => {
@@ -72,6 +74,21 @@ describe('AppShell Layout Component', () => {
     expect(component.canAccessCentros()).toBe(false);
     expect(component.canAccessClientes()).toBe(true);
     expect(component.canAccessVehiculos()).toBe(false);
+    expect(component.canAccessEmpleados()).toBe(false);
+  });
+
+  it('renders only Empleados for SUPERVISOR', () => {
+    mockTokenService.getRoles.mockReturnValue(['SUPERVISOR']);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('.nav-link');
+    expect(links.length).toBe(1);
+    expect(links[0].textContent).toContain('Empleados');
+    expect(component.canAccessCentros()).toBe(false);
+    expect(component.canAccessClientes()).toBe(false);
+    expect(component.canAccessVehiculos()).toBe(false);
+    expect(component.canAccessEmpleados()).toBe(true);
   });
 
   it('renders zero links for CHOFER', () => {

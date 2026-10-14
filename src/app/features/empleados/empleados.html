@@ -1,0 +1,205 @@
+<div class="page-container">
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Empleados</h1>
+      <p class="page-subtitle">Gestión de personal de la empresa, nómina y vinculación con cuentas de usuario.</p>
+    </div>
+    @if (canManage()) {
+      <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
+        <span>+ Nuevo empleado</span>
+      </button>
+    }
+  </header>
+
+  @if (error()) {
+    <div class="nx-alert" role="alert">
+      <span class="nx-alert-icon">!</span>
+      <div class="alert-body">
+        <span class="nx-alert-title">Aviso</span>
+        <span class="nx-alert-text">{{ error() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="toolbar-card">
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por nombre…"
+        [ngModel]="searchNombre()"
+        (ngModelChange)="onSearchNombreChange($event)"
+        aria-label="Buscar empleados por nombre"
+      />
+    </div>
+
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por legajo…"
+        [ngModel]="searchLegajo()"
+        (ngModelChange)="onSearchLegajoChange($event)"
+        aria-label="Buscar empleados por legajo"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="estado-select" class="filter-label">Estado:</label>
+      <select
+        id="estado-select"
+        class="nx-field select-field"
+        [ngModel]="estadoFilter()"
+        (ngModelChange)="onEstadoChange($event)"
+      >
+        <option value="">Todos</option>
+        <option value="ACTIVO">Activos</option>
+        <option value="INACTIVO">Inactivos</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <div class="spinner-large" aria-hidden="true"></div>
+        <p>Cargando empleados…</p>
+      </div>
+    } @else if (empleados().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">🧑‍💼</div>
+        <h3>No se encontraron empleados</h3>
+        <p>No hay empleados que coincidan con los filtros aplicados.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Legajo</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Chofer</th>
+              <th scope="col">Usuario Vinculado</th>
+              <th scope="col">Fecha Alta</th>
+              @if (canManage()) {
+                <th scope="col" class="th-actions">Acciones</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (empleado of empleados(); track empleado.id) {
+              <tr>
+                <td class="cell-primary">{{ empleado.nombre }}</td>
+                <td class="cell-legajo">{{ empleado.legajo }}</td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [class.badge-active]="empleado.estado === 'ACTIVO'"
+                    [class.badge-inactive]="empleado.estado !== 'ACTIVO'"
+                  >
+                    {{ empleado.estado }}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    class="driver-badge"
+                    [class.driver-yes]="empleado.esChofer"
+                    [class.driver-no]="!empleado.esChofer"
+                  >
+                    {{ empleado.esChofer ? 'Chofer' : 'No' }}
+                  </span>
+                </td>
+                <td class="cell-usuario">
+                  @if (empleado.usuarioEmail) {
+                    <span class="user-pill">{{ empleado.usuarioEmail }}</span>
+                  } @else if (empleado.usuarioId) {
+                    <span class="user-pill user-uuid" [title]="empleado.usuarioId">{{ empleado.usuarioId.substring(0, 8) }}…</span>
+                  } @else {
+                    <span class="unlinked">Sin vincular</span>
+                  }
+                </td>
+                <td class="cell-date">{{ empleado.fechaAlta | date: 'dd/MM/yyyy' }}</td>
+                @if (canManage()) {
+                  <td class="cell-actions">
+                    <button
+                      type="button"
+                      class="btn-action-edit"
+                      (click)="openEditModal(empleado)"
+                      title="Editar datos del empleado"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action-link"
+                      (click)="openAsociarModal(empleado)"
+                      title="Vincular cuenta de usuario"
+                    >
+                      Vincular
+                    </button>
+                    @if (empleado.estado === 'ACTIVO') {
+                      <button
+                        type="button"
+                        class="btn-action-delete"
+                        (click)="onDeactivate(empleado)"
+                        title="Desactivar empleado"
+                      >
+                        Desactivar
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination-footer">
+        <div class="pagination-info">
+          Mostrando {{ empleados().length }} de {{ totalCount() }} empleados
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onPrevPage()"
+            [disabled]="page() <= 1"
+            aria-label="Página anterior"
+          >
+            ← Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onNextPage()"
+            [disabled]="page() >= totalPages()"
+            aria-label="Página siguiente"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+
+  <app-empleado-modal
+    [isOpen]="modalOpen()"
+    [isSubmitting]="modalSubmitting()"
+    [errorMessage]="modalError()"
+    [empleadoToEdit]="selectedEmpleado()"
+    (close)="closeModal()"
+    (save)="onModalSave($event)"
+  />
+
+  <app-asociar-usuario-modal
+    [isOpen]="asociarModalOpen()"
+    [isSubmitting]="asociarSubmitting()"
+    [errorMessage]="asociarError()"
+    [empleado]="selectedEmpleado()"
+    (close)="closeAsociarModal()"
+    (save)="onAsociarSave($event)"
+  />
+</div>
