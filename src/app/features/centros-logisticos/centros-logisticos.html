@@ -2,7 +2,9 @@
   <header class="page-header">
     <div class="header-text">
       <h1 class="page-title">Centros Logísticos</h1>
-      <p class="page-subtitle">Administración de depósitos y nodos de la red logística de Nexora.</p>
+      <p class="page-subtitle">
+        Administración de depósitos y nodos de la red logística de Nexora.
+      </p>
     </div>
     <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
       <span>+ Nuevo centro</span>
@@ -81,6 +83,14 @@
                 </td>
                 <td class="cell-date">{{ centro.fechaCreacionUtc | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="btn-action-small btn-action-depositos"
+                    (click)="openDepositosModal(centro)"
+                    title="Gestionar depósitos"
+                  >
+                    📦 Depósitos
+                  </button>
                   @if (centro.estado === 'Activo') {
                     <button
                       type="button"
@@ -105,12 +115,7 @@
           Mostrando {{ centros().length }} de {{ totalItems() }} centros
         </div>
         <div class="pagination-controls">
-          <button
-            type="button"
-            class="btn-page"
-            (click)="onPrevPage()"
-            [disabled]="page() <= 1"
-          >
+          <button type="button" class="btn-page" (click)="onPrevPage()" [disabled]="page() <= 1">
             ← Anterior
           </button>
           <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
@@ -133,5 +138,13 @@
     [errorMessage]="modalError()"
     (close)="closeCreateModal()"
     (submitCentro)="onCreateSubmit($event)"
+  />
+
+  <app-depositos-modal
+    [isOpen]="depositosModalOpen()"
+    [centro]="selectedCentroForDepositos()"
+    [canManage]="canManageDepositos()"
+    (close)="closeDepositosModal()"
+    (depositosChange)="onDepositosChange()"
   />
 </div>

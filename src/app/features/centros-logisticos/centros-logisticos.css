@@ -187,6 +187,32 @@
 
 .cell-actions {
   text-align: right;
+  white-space: nowrap;
+}
+
+.btn-action-small {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--nx-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+}
+
+.btn-action-depositos {
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.btn-action-depositos:hover {
+  background-color: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  color: #7dd3fc;
 }
 
 .btn-action-delete {

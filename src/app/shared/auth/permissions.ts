@@ -28,6 +28,7 @@ export const WRITE_PERMISSION_MAP = {
   empleados: [ROLES.SUPER_ADMIN, ROLES.ADMIN_EMPRESA],
   choferes: [ROLES.SUPER_ADMIN, ROLES.ADMIN_EMPRESA, ROLES.OPERADOR_LOGISTICO],
   vehiculos: [ROLES.SUPER_ADMIN, ROLES.ADMIN_EMPRESA, ROLES.OPERADOR_LOGISTICO],
+  depositos: [ROLES.SUPER_ADMIN, ROLES.ADMIN_EMPRESA, ROLES.JEFE_DEPOSITO],
 } as const;
 
 export type SectionKey = keyof typeof PERMISSION_MAP;
@@ -35,7 +36,10 @@ export type SectionKey = keyof typeof PERMISSION_MAP;
 /**
  * Checks whether any of the user's roles matches the required roles for a section.
  */
-export function hasAnyRole(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {
+export function hasAnyRole(
+  userRoles: readonly string[],
+  requiredRoles: readonly string[],
+): boolean {
   if (!userRoles || userRoles.length === 0) return false;
   return requiredRoles.some((required) => userRoles.includes(required));
 }
