@@ -1,0 +1,154 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="crear-chofer-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="crear-chofer-title" class="modal-title">Registrar chofer</h2>
+          <p class="modal-subtitle">Asigna rol de conductor a un empleado activo de la empresa.</p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al registrar chofer</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-group">
+          <label for="empleado-select" class="form-label">Empleado</label>
+          <select
+            id="empleado-select"
+            class="nx-field select-field"
+            [class.nx-field-error]="isEmpleadoInvalid()"
+            [ngModel]="empleadoId()"
+            (ngModelChange)="empleadoId.set($event)"
+            name="empleadoId"
+            [disabled]="isSubmitting()"
+          >
+            <option value="" disabled selected>Selecciona un empleado…</option>
+            @for (emp of empleados(); track emp.id) {
+              <option [value]="emp.id">{{ emp.nombre }} (Legajo: {{ emp.legajo }})</option>
+            }
+          </select>
+          @if (isEmpleadoInvalid()) {
+            <span class="nx-inline-error">Debes seleccionar un empleado activo.</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="centro-select" class="form-label">Centro logístico base</label>
+          <select
+            id="centro-select"
+            class="nx-field select-field"
+            [class.nx-field-error]="isCentroInvalid()"
+            [ngModel]="centroLogisticoId()"
+            (ngModelChange)="centroLogisticoId.set($event)"
+            name="centroLogisticoId"
+            [disabled]="isSubmitting()"
+          >
+            <option value="" disabled selected>Selecciona un centro…</option>
+            @for (c of centros(); track c.id) {
+              <option [value]="c.id">{{ c.nombre }}</option>
+            }
+          </select>
+          @if (isCentroInvalid()) {
+            <span class="nx-inline-error">Debes asignar un centro logístico base.</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="licencia-input" class="form-label">Número de licencia</label>
+            <input
+              id="licencia-input"
+              type="text"
+              class="nx-field"
+              [class.nx-field-error]="isNumeroLicenciaInvalid()"
+              placeholder="Ej. B2-12345678"
+              [ngModel]="numeroLicencia()"
+              (ngModelChange)="numeroLicencia.set($event)"
+              name="numeroLicencia"
+              [disabled]="isSubmitting()"
+              maxlength="50"
+            />
+            @if (isNumeroLicenciaInvalid()) {
+              <span class="nx-inline-error">El número de licencia es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="vencimiento-input" class="form-label">Fecha de vencimiento</label>
+            <input
+              id="vencimiento-input"
+              type="date"
+              class="nx-field"
+              [class.nx-field-error]="isVencimientoInvalid()"
+              [ngModel]="vencimientoLicencia()"
+              (ngModelChange)="vencimientoLicencia.set($event)"
+              name="vencimientoLicencia"
+              [disabled]="isSubmitting()"
+            />
+            @if (isVencimientoInvalid()) {
+              <span class="nx-inline-error">La fecha de vencimiento es obligatoria.</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <span class="form-label">Habilitaciones de vehículos</span>
+          <div class="checkbox-grid">
+            @for (tipo of tiposVehiculo; track tipo) {
+              <label class="checkbox-item">
+                <input
+                  type="checkbox"
+                  [checked]="isHabilitacionSelected(tipo)"
+                  (change)="toggleHabilitacion(tipo)"
+                  [disabled]="isSubmitting()"
+                />
+                <span>{{ tipo }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Registrando…</span>
+            } @else {
+              <span>Registrar chofer</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

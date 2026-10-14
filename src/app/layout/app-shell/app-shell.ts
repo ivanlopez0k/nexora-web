@@ -32,6 +32,10 @@ export class AppShell {
     return hasAnyRole(this.tokenService.getRoles(), PERMISSION_MAP.empleados);
   }
 
+  canAccessChoferes(): boolean {
+    return hasAnyRole(this.tokenService.getRoles(), PERMISSION_MAP.choferes);
+  }
+
   userEmail(): string {
     const claims = this.tokenService.getClaims();
     return claims?.email ?? 'usuario@nexora.com';

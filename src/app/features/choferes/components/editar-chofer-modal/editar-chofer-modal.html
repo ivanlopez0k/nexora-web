@@ -1,0 +1,117 @@
+@if (isOpen()) {
+  <div class="modal-backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true" aria-labelledby="editar-chofer-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="editar-chofer-title" class="modal-title">Editar chofer</h2>
+          <p class="modal-subtitle">
+            Modifica la licencia y centro logístico base de <strong>{{ chofer()?.empleadoNombre }}</strong> (Legajo: {{ chofer()?.empleadoLegajo }}).
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="nx-alert" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al actualizar chofer</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <div class="form-group">
+          <label for="edit-centro-select" class="form-label">Centro logístico base</label>
+          <select
+            id="edit-centro-select"
+            class="nx-field select-field"
+            [class.nx-field-error]="isCentroInvalid()"
+            [ngModel]="centroLogisticoId()"
+            (ngModelChange)="centroLogisticoId.set($event)"
+            name="centroLogisticoId"
+            [disabled]="isSubmitting()"
+          >
+            @for (c of centros(); track c.id) {
+              <option [value]="c.id">{{ c.nombre }}</option>
+            }
+          </select>
+          @if (isCentroInvalid()) {
+            <span class="nx-inline-error">Debes asignar un centro logístico base.</span>
+          }
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="edit-licencia-input" class="form-label">Número de licencia</label>
+            <input
+              id="edit-licencia-input"
+              type="text"
+              class="nx-field"
+              [class.nx-field-error]="isNumeroLicenciaInvalid()"
+              placeholder="Ej. B2-12345678"
+              [ngModel]="numeroLicencia()"
+              (ngModelChange)="numeroLicencia.set($event)"
+              name="numeroLicencia"
+              [disabled]="isSubmitting()"
+              maxlength="50"
+            />
+            @if (isNumeroLicenciaInvalid()) {
+              <span class="nx-inline-error">El número de licencia es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="edit-vencimiento-input" class="form-label">Fecha de vencimiento</label>
+            <input
+              id="edit-vencimiento-input"
+              type="date"
+              class="nx-field"
+              [class.nx-field-error]="isVencimientoInvalid()"
+              [ngModel]="vencimientoLicencia()"
+              (ngModelChange)="vencimientoLicencia.set($event)"
+              name="vencimientoLicencia"
+              [disabled]="isSubmitting()"
+            />
+            @if (isVencimientoInvalid()) {
+              <span class="nx-inline-error">La fecha de vencimiento es obligatoria.</span>
+            }
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Guardando…</span>
+            } @else {
+              <span>Guardar cambios</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
