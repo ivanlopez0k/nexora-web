@@ -391,3 +391,22 @@
   border-color: var(--nx-accent);
   color: #fff;
 }
+.btn-table-incidencias {
+  background: rgba(251, 113, 133, 0.1);
+  border-color: rgba(251, 113, 133, 0.3);
+  color: #fb7185;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-table-incidencias:hover {
+  background: rgba(251, 113, 133, 0.22);
+  border-color: #fb7185;
+  color: #fff;
+}
+.btn-table-incidencias-alert {
+  background: rgba(251, 113, 133, 0.25);
+  border-color: #fb7185;
+  color: #fff;
+  font-weight: 700;
+}

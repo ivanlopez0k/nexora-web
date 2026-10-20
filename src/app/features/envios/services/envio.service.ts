@@ -13,6 +13,8 @@ import type {
   EnvioResponse,
   EnviosMetricas,
   PagedResult,
+  ReportarIncidenciaRequest,
+  ResolverIncidenciaRequest,
 } from '../models/envio.models';
 
 @Injectable({
@@ -73,6 +75,24 @@ export class EnvioService {
 
   getIncidencias(id: string): Observable<EnvioIncidenciaResponse[]> {
     return this.http.get<EnvioIncidenciaResponse[]>(`${this.baseUrl}/${id}/incidencias`);
+  }
+
+  reportarIncidencia(
+    envioId: string,
+    request: ReportarIncidenciaRequest,
+  ): Observable<EnvioIncidenciaResponse> {
+    return this.http.post<EnvioIncidenciaResponse>(`${this.baseUrl}/${envioId}/incidencias`, request);
+  }
+
+  resolverIncidencia(
+    envioId: string,
+    incidenciaId: string,
+    request: ResolverIncidenciaRequest,
+  ): Observable<EnvioIncidenciaResponse> {
+    return this.http.put<EnvioIncidenciaResponse>(
+      `${this.baseUrl}/${envioId}/incidencias/${incidenciaId}/resolver`,
+      request,
+    );
   }
 
   createEnvio(request: CrearEnvioRequest): Observable<EnvioResponse> {
