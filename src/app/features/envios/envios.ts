@@ -9,6 +9,7 @@ import { AuthTokenService } from '../../shared/auth/auth-token.service';
 import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions';
 import { CrearEnvioModal } from './components/crear-envio-modal/crear-envio-modal';
 import { AsignarRecursosModal } from './components/asignar-recursos-modal/asignar-recursos-modal';
+import { DetalleEnvioModal } from './components/detalle-envio-modal/detalle-envio-modal';
 import type { Cliente } from '../clientes/models/cliente.models';
 import type { Vehiculo } from '../vehiculos/models/vehiculo.models';
 import type { Chofer } from '../choferes/models/chofer.models';
@@ -26,7 +27,7 @@ import {
 @Component({
   selector: 'app-envios',
   standalone: true,
-  imports: [CommonModule, FormsModule, CrearEnvioModal, AsignarRecursosModal],
+  imports: [CommonModule, FormsModule, CrearEnvioModal, AsignarRecursosModal, DetalleEnvioModal],
   templateUrl: './envios.html',
   styleUrl: './envios.css',
 })
@@ -56,6 +57,10 @@ export class Envios implements OnInit {
   readonly selectedEnvioForAssign = signal<EnvioListItem | null>(null);
   readonly assignModalSubmitting = signal<boolean>(false);
   readonly assignModalError = signal<string | null>(null);
+
+  // Detail Modal State
+  readonly selectedEnvioIdForDetail = signal<string | null>(null);
+  readonly detailModalOpen = signal<boolean>(false);
 
   // Filters & Pagination
   readonly search = signal<string>('');
@@ -156,6 +161,16 @@ export class Envios implements OnInit {
     this.assignModalError.set(null);
   }
 
+  openDetailModal(envioId: string): void {
+    this.selectedEnvioIdForDetail.set(envioId);
+    this.detailModalOpen.set(true);
+  }
+
+  closeDetailModal(): void {
+    this.detailModalOpen.set(false);
+    this.selectedEnvioIdForDetail.set(null);
+  }
+
   onSubmitAssign(request: AsignarRecursosEnvioRequest): void {
     const envio = this.selectedEnvioForAssign();
     if (!envio) return;
@@ -204,12 +219,7 @@ export class Envios implements OnInit {
   }
 
   canAssign(envio: EnvioListItem): boolean {
-    const allowed: EstadoEnvio[] = [
-      'Solicitado',
-      'Preparando',
-      'ListoParaDespacho',
-      'Asignado',
-    ];
+    const allowed: EstadoEnvio[] = ['Solicitado', 'Preparando', 'ListoParaDespacho', 'Asignado'];
     return allowed.includes(envio.estado);
   }
 

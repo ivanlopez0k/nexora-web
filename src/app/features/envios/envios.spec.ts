@@ -27,6 +27,8 @@ describe('Envios Component', () => {
     getEnvios: ReturnType<typeof vi.fn>;
     getMetricas: ReturnType<typeof vi.fn>;
     getEnvioById: ReturnType<typeof vi.fn>;
+    getHistorial: ReturnType<typeof vi.fn>;
+    getIncidencias: ReturnType<typeof vi.fn>;
     createEnvio: ReturnType<typeof vi.fn>;
     asignarRecursos: ReturnType<typeof vi.fn>;
     despacharEnvio: ReturnType<typeof vi.fn>;
@@ -170,7 +172,9 @@ describe('Envios Component', () => {
     mockEnvioService = {
       getEnvios: vi.fn().mockReturnValue(of(mockPaged)),
       getMetricas: vi.fn().mockReturnValue(of(mockMetricas)),
-      getEnvioById: vi.fn(),
+      getEnvioById: vi.fn().mockReturnValue(of({ ...mockEnvios[0], items: [], historial: [] })),
+      getHistorial: vi.fn().mockReturnValue(of([])),
+      getIncidencias: vi.fn().mockReturnValue(of([])),
       createEnvio: vi.fn(),
       asignarRecursos: vi.fn(),
       despacharEnvio: vi.fn(),
@@ -751,6 +755,44 @@ describe('Envios Component', () => {
       expect(assignButtons.length).toBe(2);
       // Only Asignado can be dispatched
       expect(dispatchButtons.length).toBe(1);
+    });
+
+    it('opens DetalleEnvioModal when tracking number is clicked', () => {
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const trackingButtons = compiled.querySelectorAll('.tracking-badge-btn');
+      expect(trackingButtons.length).toBeGreaterThan(0);
+
+      (trackingButtons[0] as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(component.detailModalOpen()).toBe(true);
+      expect(component.selectedEnvioIdForDetail()).toBe('env-1');
+    });
+
+    it('opens DetalleEnvioModal when "Ver detalle" action button is clicked', () => {
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const detailButtons = compiled.querySelectorAll('.btn-table-detail');
+      expect(detailButtons.length).toBeGreaterThan(0);
+
+      (detailButtons[0] as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(component.detailModalOpen()).toBe(true);
+      expect(component.selectedEnvioIdForDetail()).toBe('env-1');
+    });
+
+    it('closes DetalleEnvioModal and clears selected shipment when closeDetailModal is called', () => {
+      component.openDetailModal('env-1');
+      expect(component.detailModalOpen()).toBe(true);
+      expect(component.selectedEnvioIdForDetail()).toBe('env-1');
+
+      component.closeDetailModal();
+      expect(component.detailModalOpen()).toBe(false);
+      expect(component.selectedEnvioIdForDetail()).toBeNull();
     });
   });
 });

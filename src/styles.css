@@ -409,3 +409,81 @@ body {
   border-radius: 50%;
   animation: nx-spin var(--nx-duration-spin) linear infinite;
 }
+
+/* --- Badges & Status Pills (Global) --- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge-solicitado {
+  --c: #c4b5fd;
+}
+.badge-pendiente {
+  --c: #facc15;
+}
+.badge-preparando {
+  --c: #7dd3fc;
+}
+.badge-listo {
+  --c: #a5b4fc;
+}
+.badge-asignado {
+  --c: #93c5fd;
+}
+.badge-entransito {
+  --c: #38bdf8;
+}
+.badge-entregado {
+  --c: var(--nx-success, #3dd68c);
+}
+.badge-incidencia {
+  --c: var(--nx-error-text, #fb7185);
+}
+.badge-cancelado,
+.badge-desconocido {
+  --c: #94a3b8;
+}
+.tracking-badge {
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--nx-accent);
+  background: rgba(138, 108, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(138, 108, 255, 0.25);
+}
+.unassigned-badge {
+  font-size: 11px;
+  color: var(--nx-text-dim, #64748b);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--nx-border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  width: fit-content;
+}
+.vehicle-tag {
+  font-family: 'Geist Mono', monospace;
+  font-weight: 600;
+  font-size: 11px;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  width: fit-content;
+}
