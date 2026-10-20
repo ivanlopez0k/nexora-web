@@ -28,6 +28,50 @@ export interface EnvioListItem {
   choferNombreCompleto?: string | null;
 }
 
+export interface CrearEnvioItemRequest {
+  descripcion: string;
+  pesoKg: number;
+  volumenM3?: number | null;
+  cantidad: number;
+}
+
+export interface CrearEnvioRequest {
+  clienteId: string;
+  origen: string;
+  destino: string;
+  fechaProgramada?: string | null;
+  observaciones?: string | null;
+  items: CrearEnvioItemRequest[];
+}
+
+export interface EnvioResponse {
+  id: string;
+  numeroSeguimiento: string;
+  clienteId: string;
+  clienteRazonSocial: string;
+  origen: string;
+  destino: string;
+  estado: EstadoEnvio;
+  fechaProgramada: string | null;
+  observaciones: string | null;
+  pesoTotalKg: number;
+  volumenTotalM3: number;
+  cantidadItems: number;
+  fechaCreacion: string;
+  items?: any[];
+  vehiculoId?: string | null;
+  vehiculoPatente?: string | null;
+  choferId?: string | null;
+  choferNombreCompleto?: string | null;
+}
+
+export interface CrearEnvioItemFormModel {
+  descripcion: string;
+  pesoKg: number | null;
+  volumenM3: number | null;
+  cantidad: number;
+}
+
 export interface EnvioQueryParams {
   page?: number;
   pageSize?: number;
