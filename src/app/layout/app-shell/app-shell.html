@@ -79,6 +79,20 @@
             </a>
           </li>
         }
+
+        @if (canAccessEnvios()) {
+          <li class="nav-item">
+            <a
+              routerLink="/envios"
+              routerLinkActive="active"
+              class="nav-link"
+              title="Envíos"
+            >
+              <span class="nav-icon" aria-hidden="true">📦</span>
+              <span class="nav-label">Envíos</span>
+            </a>
+          </li>
+        }
       </ul>
     </nav>
 

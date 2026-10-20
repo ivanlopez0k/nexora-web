@@ -1,0 +1,243 @@
+<div class="page-container">
+  <!-- Metrics Ribbon -->
+  <section class="metrics-ribbon" aria-label="Métricas de envíos">
+    <div class="metric-card">
+      <div class="metric-icon metric-icon-active" aria-hidden="true">📦</div>
+      <div class="metric-content">
+        <span class="metric-label">Envíos Activos</span>
+        <span class="metric-value">{{ metricas()?.enviosActivos ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon metric-icon-transit" aria-hidden="true">🚚</div>
+      <div class="metric-content">
+        <span class="metric-label">En Tránsito</span>
+        <span class="metric-value">{{ metricas()?.enTransito ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon metric-icon-delivered" aria-hidden="true">✅</div>
+      <div class="metric-content">
+        <span class="metric-label">Entregados Hoy</span>
+        <span class="metric-value">{{ metricas()?.entregadosHoy ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon metric-icon-incident" aria-hidden="true">⚠️</div>
+      <div class="metric-content">
+        <span class="metric-label">Con Incidencia</span>
+        <span class="metric-value">{{ metricas()?.incidenciasAbiertas ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon metric-icon-compliance" aria-hidden="true">📈</div>
+      <div class="metric-content">
+        <span class="metric-label">Cumplimiento</span>
+        <span class="metric-value">{{ metricas()?.porcentajeCumplimiento ?? 0 }}%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-text">
+      <h1 class="page-title">Gestión de Envíos</h1>
+      <p class="page-subtitle">Control operativo, seguimiento en ruta y trazabilidad de carga.</p>
+    </div>
+    @if (canManage()) {
+      <button type="button" class="nx-button btn-create">
+        <span>+ Nuevo Envío</span>
+      </button>
+    }
+  </header>
+
+  @if (error()) {
+    <div class="nx-alert" role="alert">
+      <span class="nx-alert-icon">!</span>
+      <div class="alert-body">
+        <span class="nx-alert-title">Error</span>
+        <span class="nx-alert-text">{{ error() }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Filter Toolbar -->
+  <section class="toolbar-card">
+    <div class="search-box">
+      <input
+        type="search"
+        class="nx-field"
+        placeholder="Buscar por código de seguimiento, cliente o destino…"
+        [ngModel]="search()"
+        (ngModelChange)="onSearchChange($event)"
+        aria-label="Buscar envíos"
+      />
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-item">
+        <label for="estado-filter" class="filter-label">Estado:</label>
+        <select
+          id="estado-filter"
+          class="nx-field select-field"
+          [ngModel]="estadoFilter()"
+          (ngModelChange)="onEstadoFilterChange($event)"
+        >
+          @for (opt of estadosOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="fecha-desde" class="filter-label">Desde:</label>
+        <input
+          id="fecha-desde"
+          type="date"
+          class="nx-field date-field"
+          [ngModel]="fechaDesde()"
+          (ngModelChange)="onFechaDesdeChange($event)"
+          aria-label="Fecha desde"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="fecha-hasta" class="filter-label">Hasta:</label>
+        <input
+          id="fecha-hasta"
+          type="date"
+          class="nx-field date-field"
+          [ngModel]="fechaHasta()"
+          (ngModelChange)="onFechaHastaChange($event)"
+          aria-label="Fecha hasta"
+        />
+      </div>
+
+      <button
+        type="button"
+        class="btn-clear-filters"
+        (click)="clearFilters()"
+        title="Restablecer todos los filtros"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+  </section>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state" role="status">
+        <div class="spinner-large" aria-hidden="true"></div>
+        <p>Cargando envíos…</p>
+      </div>
+    } @else if (envios().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">📦</div>
+        <h3>No se encontraron envíos</h3>
+        <p>No hay envíos registrados que coincidan con los criterios de búsqueda.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Seguimiento</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Ruta (Origen → Destino)</th>
+              <th scope="col">Carga</th>
+              <th scope="col">Recursos Asignados</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Fecha Programada</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (envio of envios(); track envio.id) {
+              <tr>
+                <td>
+                  <span class="tracking-badge">{{ envio.numeroSeguimiento }}</span>
+                </td>
+                <td class="cell-primary">
+                  <span class="client-name">{{ envio.clienteRazonSocial }}</span>
+                </td>
+                <td>
+                  <div class="route-cell">
+                    <span class="route-origin" [title]="envio.origen">{{ envio.origen }}</span>
+                    <span class="route-arrow" aria-hidden="true">→</span>
+                    <span class="route-dest" [title]="envio.destino">{{ envio.destino }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="cargo-cell">
+                    <span class="cargo-weight">{{ envio.pesoTotalKg | number }} kg</span>
+                    <span class="cargo-meta">{{ envio.cantidadItems }} bultos · {{ envio.volumenTotalM3 | number }} m³</span>
+                  </div>
+                </td>
+                <td>
+                  @if (envio.vehiculoPatente || envio.choferNombreCompleto) {
+                    <div class="resources-cell">
+                      @if (envio.vehiculoPatente) {
+                        <span class="vehicle-tag">{{ envio.vehiculoPatente }}</span>
+                      }
+                      @if (envio.choferNombreCompleto) {
+                        <span class="driver-name" [title]="envio.choferNombreCompleto">
+                          {{ envio.choferNombreCompleto }}
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="unassigned-badge">Sin asignar</span>
+                  }
+                </td>
+                <td>
+                  <span
+                    class="status-badge"
+                    [ngClass]="getEstadoConfig(envio.estado).badgeClass"
+                  >
+                    <span class="status-dot" aria-hidden="true"></span>
+                    {{ getEstadoConfig(envio.estado).label }}
+                  </span>
+                </td>
+                <td>
+                  <div class="date-cell">
+                    <span class="date-primary">{{ formatDate(envio.fechaProgramada) }}</span>
+                    <span class="date-secondary">Creado: {{ formatDate(envio.fechaCreacion) }}</span>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination-footer">
+        <div class="pagination-info">
+          Mostrando {{ envios().length }} de {{ totalCount() }} envíos
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onPrevPage()"
+            [disabled]="page() <= 1"
+          >
+            ← Anterior
+          </button>
+          <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
+          <button
+            type="button"
+            class="btn-page"
+            (click)="onNextPage()"
+            [disabled]="page() >= totalPages()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </footer>
+    }
+  </div>
+</div>

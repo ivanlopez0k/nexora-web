@@ -36,65 +36,72 @@ describe('AppShell Layout Component', () => {
     component = fixture.componentInstance;
   });
 
-  it('renders all five navigation links for SUPER_ADMIN', () => {
+  it('renders all six navigation links for SUPER_ADMIN', () => {
     mockTokenService.getRoles.mockReturnValue(['SUPER_ADMIN']);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
-    expect(links.length).toBe(5);
+    expect(links.length).toBe(6);
     expect(component.canAccessCentros()).toBe(true);
     expect(component.canAccessClientes()).toBe(true);
     expect(component.canAccessVehiculos()).toBe(true);
     expect(component.canAccessEmpleados()).toBe(true);
     expect(component.canAccessChoferes()).toBe(true);
+    expect(component.canAccessEnvios()).toBe(true);
   });
 
-  it('renders Vehiculos and Choferes for OPERADOR_LOGISTICO', () => {
+  it('renders Vehiculos, Choferes and Envios for OPERADOR_LOGISTICO', () => {
     mockTokenService.getRoles.mockReturnValue(['OPERADOR_LOGISTICO']);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
-    expect(links.length).toBe(2);
+    expect(links.length).toBe(3);
     expect(links[0].textContent).toContain('Vehículos');
     expect(links[1].textContent).toContain('Choferes');
+    expect(links[2].textContent).toContain('Envíos');
     expect(component.canAccessCentros()).toBe(false);
     expect(component.canAccessClientes()).toBe(false);
     expect(component.canAccessVehiculos()).toBe(true);
     expect(component.canAccessEmpleados()).toBe(false);
     expect(component.canAccessChoferes()).toBe(true);
+    expect(component.canAccessEnvios()).toBe(true);
   });
 
-  it('renders only Clientes for ADMINISTRACION', () => {
+  it('renders Clientes and Envios for ADMINISTRACION', () => {
     mockTokenService.getRoles.mockReturnValue(['ADMINISTRACION']);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
-    expect(links.length).toBe(1);
+    expect(links.length).toBe(2);
     expect(links[0].textContent).toContain('Clientes');
+    expect(links[1].textContent).toContain('Envíos');
     expect(component.canAccessCentros()).toBe(false);
     expect(component.canAccessClientes()).toBe(true);
     expect(component.canAccessVehiculos()).toBe(false);
     expect(component.canAccessEmpleados()).toBe(false);
     expect(component.canAccessChoferes()).toBe(false);
+    expect(component.canAccessEnvios()).toBe(true);
   });
 
-  it('renders Empleados and Choferes for SUPERVISOR', () => {
+  it('renders Empleados, Choferes and Envios for SUPERVISOR', () => {
     mockTokenService.getRoles.mockReturnValue(['SUPERVISOR']);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
-    expect(links.length).toBe(2);
+    expect(links.length).toBe(3);
     expect(links[0].textContent).toContain('Empleados');
     expect(links[1].textContent).toContain('Choferes');
+    expect(links[2].textContent).toContain('Envíos');
     expect(component.canAccessCentros()).toBe(false);
     expect(component.canAccessClientes()).toBe(false);
     expect(component.canAccessVehiculos()).toBe(false);
     expect(component.canAccessEmpleados()).toBe(true);
     expect(component.canAccessChoferes()).toBe(true);
+    expect(component.canAccessEnvios()).toBe(true);
   });
 
   it('renders zero links for CHOFER', () => {
@@ -104,6 +111,7 @@ describe('AppShell Layout Component', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const links = compiled.querySelectorAll('.nav-link');
     expect(links.length).toBe(0);
+    expect(component.canAccessEnvios()).toBe(false);
   });
 
   it('displays user email and primary role badge', () => {

@@ -57,6 +57,13 @@ export const routes: Routes = [
         title: 'Choferes · Nexora',
       },
       {
+        path: 'envios',
+        canActivate: [authGuard],
+        data: { roles: PERMISSION_MAP.envios },
+        loadComponent: () => import('./features/envios/envios').then((m) => m.Envios),
+        title: 'Envíos · Nexora',
+      },
+      {
         path: 'acceso-denegado',
         loadComponent: () =>
           import('./features/acceso-denegado/acceso-denegado').then((m) => m.AccesoDenegado),
