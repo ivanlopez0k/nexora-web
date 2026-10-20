@@ -4,10 +4,15 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Envios } from './envios';
 import { EnvioService } from './services/envio.service';
 import { ClienteService } from '../clientes/services/cliente.service';
+import { VehiculoService } from '../vehiculos/services/vehiculo.service';
+import { ChoferService } from '../choferes/services/chofer.service';
 import { AuthTokenService } from '../../shared/auth/auth-token.service';
 import { ROLES } from '../../shared/auth/permissions';
 import type { Cliente } from '../clientes/models/cliente.models';
+import type { Vehiculo } from '../vehiculos/models/vehiculo.models';
+import type { Chofer } from '../choferes/models/chofer.models';
 import type {
+  AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
   EnvioListItem,
   EnvioResponse,
@@ -23,14 +28,57 @@ describe('Envios Component', () => {
     getMetricas: ReturnType<typeof vi.fn>;
     getEnvioById: ReturnType<typeof vi.fn>;
     createEnvio: ReturnType<typeof vi.fn>;
+    asignarRecursos: ReturnType<typeof vi.fn>;
+    despacharEnvio: ReturnType<typeof vi.fn>;
   };
   let mockClienteService: {
     getClientes: ReturnType<typeof vi.fn>;
+  };
+  let mockVehiculoService: {
+    getVehiculos: ReturnType<typeof vi.fn>;
+  };
+  let mockChoferService: {
+    getChoferes: ReturnType<typeof vi.fn>;
   };
   let mockTokenService: {
     getRoles: ReturnType<typeof vi.fn>;
     getClaims: ReturnType<typeof vi.fn>;
   };
+
+  const mockVehiculos: Vehiculo[] = [
+    {
+      id: 'veh-1',
+      patente: 'AF123CD',
+      formattedPatente: 'AF 123 CD',
+      marca: 'Mercedes-Benz',
+      modelo: 'Sprinter',
+      anio: 2023,
+      tipo: 'Furgon',
+      capacidad: 2500,
+      kilometraje: 30000,
+      estado: 'Disponible',
+      centroLogisticoId: 'cl-1',
+      fechaAlta: '2023-01-01',
+    },
+  ];
+
+  const mockChoferes: Chofer[] = [
+    {
+      id: 'cho-1',
+      empleadoId: 'emp-1',
+      empleadoNombre: 'Carlos Gómez',
+      empleadoLegajo: 'LEG-101',
+      centroLogisticoId: 'cl-1',
+      centroLogisticoNombre: 'CD Norte',
+      numeroLicencia: 'B12345678',
+      vencimientoLicencia: '2027-12-31',
+      estado: 'ACTIVO',
+      habilitaciones: ['Furgon'],
+      esElegibleHoy: true,
+      motivoNoElegible: null,
+      fechaAlta: '2024-01-01',
+    },
+  ];
 
   const mockClientes: Cliente[] = [
     {
@@ -124,10 +172,20 @@ describe('Envios Component', () => {
       getMetricas: vi.fn().mockReturnValue(of(mockMetricas)),
       getEnvioById: vi.fn(),
       createEnvio: vi.fn(),
+      asignarRecursos: vi.fn(),
+      despacharEnvio: vi.fn(),
     };
 
     mockClienteService = {
       getClientes: vi.fn().mockReturnValue(of({ items: mockClientes, totalItems: 2 })),
+    };
+
+    mockVehiculoService = {
+      getVehiculos: vi.fn().mockReturnValue(of({ items: mockVehiculos, totalItems: 1 })),
+    };
+
+    mockChoferService = {
+      getChoferes: vi.fn().mockReturnValue(of({ items: mockChoferes, totalCount: 1 })),
     };
 
     mockTokenService = {
@@ -140,6 +198,8 @@ describe('Envios Component', () => {
       providers: [
         { provide: EnvioService, useValue: mockEnvioService },
         { provide: ClienteService, useValue: mockClienteService },
+        { provide: VehiculoService, useValue: mockVehiculoService },
+        { provide: ChoferService, useValue: mockChoferService },
         { provide: AuthTokenService, useValue: mockTokenService },
       ],
     }).compileComponents();
@@ -468,6 +528,229 @@ describe('Envios Component', () => {
       expect(component.createModalError()).toBe(
         'No se pudo registrar el envío. Intente nuevamente.',
       );
+    });
+  });
+
+  describe('Resource Assignment and Dispatch Integration', () => {
+    it('opens assign modal and loads available vehicles and drivers', () => {
+      fixture.detectChanges();
+
+      const envioToAssign = mockEnvios[1]; // Solicitado
+      component.openAssignModal(envioToAssign);
+
+      expect(component.assignModalOpen()).toBe(true);
+      expect(component.selectedEnvioForAssign()).toEqual(envioToAssign);
+      expect(component.assignModalError()).toBeNull();
+      expect(mockVehiculoService.getVehiculos).toHaveBeenCalledWith({
+        estado: 'Disponible',
+        pageSize: 100,
+      });
+      expect(mockChoferService.getChoferes).toHaveBeenCalledWith({
+        soloActivos: true,
+        pageSize: 100,
+      });
+      expect(component.vehiculosDisponibles().length).toBe(1);
+      expect(component.choferesDisponibles().length).toBe(1);
+    });
+
+    it('closes assign modal and resets state', () => {
+      fixture.detectChanges();
+
+      component.openAssignModal(mockEnvios[1]);
+      expect(component.assignModalOpen()).toBe(true);
+
+      component.closeAssignModal();
+      expect(component.assignModalOpen()).toBe(false);
+      expect(component.selectedEnvioForAssign()).toBeNull();
+      expect(component.assignModalError()).toBeNull();
+    });
+
+    it('submits assignment successfully, closes modal and refreshes data', () => {
+      const mockPayload: AsignarRecursosEnvioRequest = {
+        vehiculoId: 'veh-1',
+        choferId: 'cho-1',
+        motivo: 'Asignación programada',
+      };
+
+      const mockResponse: EnvioResponse = {
+        id: 'env-2',
+        numeroSeguimiento: 'NEX-2026-0002',
+        clienteId: 'cli-2',
+        clienteRazonSocial: 'Logística Andina',
+        origen: 'Puerto Buenos Aires',
+        destino: 'Centro Logístico Sur',
+        estado: 'Asignado',
+        fechaProgramada: null,
+        observaciones: null,
+        pesoTotalKg: 500,
+        volumenTotalM3: 2.1,
+        cantidadItems: 12,
+        fechaCreacion: '2026-10-20T09:30:00Z',
+        vehiculoId: 'veh-1',
+        vehiculoPatente: 'AF 123 CD',
+        choferId: 'cho-1',
+        choferNombreCompleto: 'Carlos Gómez',
+      };
+
+      mockEnvioService.asignarRecursos.mockReturnValue(of(mockResponse));
+      fixture.detectChanges();
+
+      component.openAssignModal(mockEnvios[1]);
+      component.onSubmitAssign(mockPayload);
+
+      expect(mockEnvioService.asignarRecursos).toHaveBeenCalledWith('env-2', mockPayload);
+      expect(component.assignModalSubmitting()).toBe(false);
+      expect(component.assignModalOpen()).toBe(false);
+      expect(component.selectedEnvioForAssign()).toBeNull();
+      expect(mockEnvioService.getEnvios).toHaveBeenCalledTimes(2);
+      expect(mockEnvioService.getMetricas).toHaveBeenCalledTimes(2);
+    });
+
+    it('handles assignment error and populates assignModalError', () => {
+      const mockPayload: AsignarRecursosEnvioRequest = {
+        vehiculoId: 'veh-1',
+        choferId: 'cho-1',
+      };
+
+      mockEnvioService.asignarRecursos.mockReturnValue(
+        throwError(() => ({
+          error: { message: 'El vehículo seleccionado no se encuentra disponible.' },
+        })),
+      );
+      fixture.detectChanges();
+
+      component.openAssignModal(mockEnvios[1]);
+      component.onSubmitAssign(mockPayload);
+
+      expect(mockEnvioService.asignarRecursos).toHaveBeenCalledWith('env-2', mockPayload);
+      expect(component.assignModalSubmitting()).toBe(false);
+      expect(component.assignModalOpen()).toBe(true);
+      expect(component.assignModalError()).toBe(
+        'El vehículo seleccionado no se encuentra disponible.',
+      );
+    });
+
+    it('handles assignment error fallback message when response lacks message', () => {
+      const mockPayload: AsignarRecursosEnvioRequest = {
+        vehiculoId: 'veh-1',
+        choferId: 'cho-1',
+      };
+
+      mockEnvioService.asignarRecursos.mockReturnValue(throwError(() => ({})));
+      fixture.detectChanges();
+
+      component.openAssignModal(mockEnvios[1]);
+      component.onSubmitAssign(mockPayload);
+
+      expect(component.assignModalSubmitting()).toBe(false);
+      expect(component.assignModalError()).toBe(
+        'No se pudieron asignar los recursos al envío. Intente nuevamente.',
+      );
+    });
+
+    it('dispatches shipment when confirmed by user', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const mockResponse: EnvioResponse = {
+        id: 'env-1',
+        numeroSeguimiento: 'NEX-2026-0001',
+        clienteId: 'cli-1',
+        clienteRazonSocial: 'Distribuidora Pampeana S.A.',
+        origen: 'CD Norte',
+        destino: 'Almacén Central',
+        estado: 'EnTransito',
+        fechaProgramada: '2026-10-25T10:00:00Z',
+        observaciones: null,
+        pesoTotalKg: 1500,
+        volumenTotalM3: 6.5,
+        cantidadItems: 30,
+        fechaCreacion: '2026-10-20T08:00:00Z',
+      };
+
+      mockEnvioService.despacharEnvio.mockReturnValue(of(mockResponse));
+      fixture.detectChanges();
+
+      component.onDespachar(mockEnvios[0]);
+
+      expect(confirmSpy).toHaveBeenCalledWith('¿Está seguro de despachar el envío NEX-2026-0001?');
+      expect(mockEnvioService.despacharEnvio).toHaveBeenCalledWith('env-1');
+      expect(mockEnvioService.getEnvios).toHaveBeenCalledTimes(2);
+      expect(mockEnvioService.getMetricas).toHaveBeenCalledTimes(2);
+
+      confirmSpy.mockRestore();
+    });
+
+    it('aborts dispatch when user cancels the confirmation dialog', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      fixture.detectChanges();
+
+      component.onDespachar(mockEnvios[0]);
+
+      expect(confirmSpy).toHaveBeenCalled();
+      expect(mockEnvioService.despacharEnvio).not.toHaveBeenCalled();
+
+      confirmSpy.mockRestore();
+    });
+
+    it('sets error state when dispatch request fails', () => {
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockEnvioService.despacharEnvio.mockReturnValue(
+        throwError(() => ({
+          error: { message: 'El envío aún no cuenta con recursos asignados.' },
+        })),
+      );
+      fixture.detectChanges();
+
+      component.onDespachar(mockEnvios[0]);
+
+      expect(component.error()).toBe('El envío aún no cuenta con recursos asignados.');
+      confirmSpy.mockRestore();
+    });
+
+    it('verifies canAssign allows relevant states and disallows others', () => {
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'Solicitado' })).toBe(true);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'Preparando' })).toBe(true);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'ListoParaDespacho' })).toBe(true);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'Asignado' })).toBe(true);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'EnTransito' })).toBe(false);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'Entregado' })).toBe(false);
+      expect(component.canAssign({ ...mockEnvios[0], estado: 'Cancelado' })).toBe(false);
+    });
+
+    it('verifies canDespachar is only true when estado is Asignado', () => {
+      expect(component.canDespachar({ ...mockEnvios[0], estado: 'Asignado' })).toBe(true);
+      expect(component.canDespachar({ ...mockEnvios[0], estado: 'Solicitado' })).toBe(false);
+      expect(component.canDespachar({ ...mockEnvios[0], estado: 'ListoParaDespacho' })).toBe(false);
+      expect(component.canDespachar({ ...mockEnvios[0], estado: 'EnTransito' })).toBe(false);
+    });
+
+    it('renders "Asignar" and "Despachar" buttons according to permissions and state', () => {
+      const testEnvios: EnvioListItem[] = [
+        { ...mockEnvios[0], id: 'env-solicitado', estado: 'Solicitado' },
+        { ...mockEnvios[1], id: 'env-asignado', estado: 'Asignado' },
+      ];
+
+      mockEnvioService.getEnvios.mockReturnValue(
+        of({
+          items: testEnvios,
+          totalCount: 2,
+          pageNumber: 1,
+          pageSize: 10,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }),
+      );
+
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const assignButtons = compiled.querySelectorAll('.btn-table-assign');
+      const dispatchButtons = compiled.querySelectorAll('.btn-table-dispatch');
+
+      // Both Solicitado and Asignado can be assigned
+      expect(assignButtons.length).toBe(2);
+      // Only Asignado can be dispatched
+      expect(dispatchButtons.length).toBe(1);
     });
   });
 });

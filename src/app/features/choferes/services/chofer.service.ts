@@ -29,6 +29,9 @@ export class ChoferService {
     if (filter.centroLogisticoId) {
       params = params.set('centroLogisticoId', filter.centroLogisticoId.trim());
     }
+    if (filter.soloActivos !== undefined) {
+      params = params.set('soloActivos', filter.soloActivos.toString());
+    }
     if (filter.estado) {
       params = params.set('estado', filter.estado.trim());
     }

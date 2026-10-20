@@ -44,6 +44,16 @@ export interface CrearEnvioRequest {
   items: CrearEnvioItemRequest[];
 }
 
+export interface AsignarRecursosEnvioRequest {
+  vehiculoId: string;
+  choferId: string;
+  motivo?: string | null;
+}
+
+export interface DespacharEnvioRequest {
+  motivo?: string | null;
+}
+
 export interface EnvioResponse {
   id: string;
   numeroSeguimiento: string;

@@ -153,6 +153,7 @@
               <th scope="col">Recursos Asignados</th>
               <th scope="col">Estado</th>
               <th scope="col">Fecha Programada</th>
+              <th scope="col" class="th-actions">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -210,6 +211,32 @@
                     >
                   </div>
                 </td>
+                <td class="cell-actions">
+                  @if (canManage()) {
+                    <div class="table-actions">
+                      @if (canAssign(envio)) {
+                        <button
+                          type="button"
+                          class="nx-btn-table btn-table-assign"
+                          (click)="openAssignModal(envio)"
+                          title="Asignar vehículo y chofer"
+                        >
+                          Asignar
+                        </button>
+                      }
+                      @if (canDespachar(envio)) {
+                        <button
+                          type="button"
+                          class="nx-btn-table btn-table-dispatch"
+                          (click)="onDespachar(envio)"
+                          title="Despachar envío"
+                        >
+                          Despachar
+                        </button>
+                      }
+                    </div>
+                  }
+                </td>
               </tr>
             }
           </tbody>
@@ -246,5 +273,17 @@
     [clientes]="clientes()"
     (close)="closeCreateModal()"
     (submitEnvio)="onSubmitCreateEnvio($event)"
+  />
+
+  <!-- Modal Asignar Recursos -->
+  <app-asignar-recursos-modal
+    [isOpen]="assignModalOpen()"
+    [isSubmitting]="assignModalSubmitting()"
+    [errorMessage]="assignModalError()"
+    [envio]="selectedEnvioForAssign()"
+    [vehiculos]="vehiculosDisponibles()"
+    [choferes]="choferesDisponibles()"
+    (close)="closeAssignModal()"
+    (submitAsignacion)="onSubmitAssign($event)"
   />
 </div>

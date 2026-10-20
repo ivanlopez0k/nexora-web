@@ -4,7 +4,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { EnvioService } from './envio.service';
 import type {
+  AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
+  DespacharEnvioRequest,
   EnvioListItem,
   EnvioResponse,
   EnviosMetricas,
@@ -196,6 +198,112 @@ describe('EnvioService', () => {
       const req = httpMock.expectOne('/api/v1/envios');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
+    });
+  });
+
+  describe('asignarRecursos', () => {
+    it('sends POST request to /api/v1/envios/:id/asignar with payload and returns updated envio', () => {
+      const envioId = 'env-001';
+      const payload: AsignarRecursosEnvioRequest = {
+        vehiculoId: 'veh-001',
+        choferId: 'cho-001',
+        motivo: 'Asignación programada de turno mañana',
+      };
+
+      const mockResponse: EnvioResponse = {
+        id: 'env-001',
+        numeroSeguimiento: 'NEX-2026-0001',
+        clienteId: 'cli-001',
+        clienteRazonSocial: 'Logística Sur S.A.',
+        origen: 'Centro Distribución Norte',
+        destino: 'Almacén Central',
+        estado: 'Asignado',
+        fechaProgramada: '2026-10-25T10:00:00Z',
+        observaciones: null,
+        pesoTotalKg: 1250.5,
+        volumenTotalM3: 8.2,
+        cantidadItems: 42,
+        fechaCreacion: '2026-10-20T08:00:00Z',
+        vehiculoId: 'veh-001',
+        vehiculoPatente: 'AF 123 CD',
+        choferId: 'cho-001',
+        choferNombreCompleto: 'Carlos Gómez',
+      };
+
+      service.asignarRecursos(envioId, payload).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(`/api/v1/envios/${envioId}/asignar`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
+    });
+  });
+
+  describe('despacharEnvio', () => {
+    it('sends POST request to /api/v1/envios/:id/despachar with payload and returns updated envio', () => {
+      const envioId = 'env-001';
+      const payload: DespacharEnvioRequest = {
+        motivo: 'Despacho iniciado en horario',
+      };
+
+      const mockResponse: EnvioResponse = {
+        id: 'env-001',
+        numeroSeguimiento: 'NEX-2026-0001',
+        clienteId: 'cli-001',
+        clienteRazonSocial: 'Logística Sur S.A.',
+        origen: 'Centro Distribución Norte',
+        destino: 'Almacén Central',
+        estado: 'EnTransito',
+        fechaProgramada: '2026-10-25T10:00:00Z',
+        observaciones: null,
+        pesoTotalKg: 1250.5,
+        volumenTotalM3: 8.2,
+        cantidadItems: 42,
+        fechaCreacion: '2026-10-20T08:00:00Z',
+        vehiculoId: 'veh-001',
+        vehiculoPatente: 'AF 123 CD',
+        choferId: 'cho-001',
+        choferNombreCompleto: 'Carlos Gómez',
+      };
+
+      service.despacharEnvio(envioId, payload).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(`/api/v1/envios/${envioId}/despachar`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
+    });
+
+    it('defaults payload to empty object when request is omitted', () => {
+      const envioId = 'env-002';
+      const mockResponse: EnvioResponse = {
+        id: 'env-002',
+        numeroSeguimiento: 'NEX-2026-0002',
+        clienteId: 'cli-001',
+        clienteRazonSocial: 'Logística Sur S.A.',
+        origen: 'CD Norte',
+        destino: 'Destino',
+        estado: 'EnTransito',
+        fechaProgramada: null,
+        observaciones: null,
+        pesoTotalKg: 100,
+        volumenTotalM3: 1,
+        cantidadItems: 1,
+        fechaCreacion: '2026-10-20T08:00:00Z',
+      };
+
+      service.despacharEnvio(envioId).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(`/api/v1/envios/${envioId}/despachar`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
       req.flush(mockResponse);
     });
   });

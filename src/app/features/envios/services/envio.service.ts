@@ -3,7 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import type {
+  AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
+  DespacharEnvioRequest,
   EnvioListItem,
   EnvioQueryParams,
   EnvioResponse,
@@ -65,5 +67,19 @@ export class EnvioService {
 
   createEnvio(request: CrearEnvioRequest): Observable<EnvioResponse> {
     return this.http.post<EnvioResponse>(this.baseUrl, request);
+  }
+
+  asignarRecursos(
+    envioId: string,
+    request: AsignarRecursosEnvioRequest,
+  ): Observable<EnvioResponse> {
+    return this.http.post<EnvioResponse>(`${this.baseUrl}/${envioId}/asignar`, request);
+  }
+
+  despacharEnvio(
+    envioId: string,
+    request: DespacharEnvioRequest = {},
+  ): Observable<EnvioResponse> {
+    return this.http.post<EnvioResponse>(`${this.baseUrl}/${envioId}/despachar`, request);
   }
 }
