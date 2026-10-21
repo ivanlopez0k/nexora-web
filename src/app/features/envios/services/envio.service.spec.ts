@@ -4,7 +4,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { EnvioService } from './envio.service';
 import type {
+  CrearEnvioRequest,
   EnvioListItem,
+  EnvioResponse,
   EnviosMetricas,
   PagedResult,
 } from '../models/envio.models';
@@ -150,6 +152,51 @@ describe('EnvioService', () => {
       const req = httpMock.expectOne('/api/v1/envios/env-001');
       expect(req.request.method).toBe('GET');
       req.flush(mockEnvio);
+    });
+  });
+
+  describe('createEnvio', () => {
+    it('sends POST request to /api/v1/envios with payload and returns created envio', () => {
+      const payload: CrearEnvioRequest = {
+        clienteId: 'cli-001',
+        origen: 'Centro Distribución Norte',
+        destino: 'Almacén Central',
+        fechaProgramada: '2026-10-25T14:00:00Z',
+        observaciones: 'Frágil',
+        items: [
+          {
+            descripcion: 'Cajas de componentes',
+            pesoKg: 10.5,
+            volumenM3: 0.5,
+            cantidad: 2,
+          },
+        ],
+      };
+
+      const mockResponse: EnvioResponse = {
+        id: 'env-999',
+        numeroSeguimiento: 'NEX-2026-9999',
+        clienteId: 'cli-001',
+        clienteRazonSocial: 'Logística Sur S.A.',
+        origen: 'Centro Distribución Norte',
+        destino: 'Almacén Central',
+        estado: 'Solicitado',
+        fechaProgramada: '2026-10-25T14:00:00Z',
+        observaciones: 'Frágil',
+        pesoTotalKg: 21,
+        volumenTotalM3: 1,
+        cantidadItems: 2,
+        fechaCreacion: '2026-10-20T20:00:00Z',
+      };
+
+      service.createEnvio(payload).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
     });
   });
 });

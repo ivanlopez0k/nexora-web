@@ -1,0 +1,326 @@
+@if (isOpen()) {
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="crear-envio-title"
+  >
+    <div class="modal-container">
+      <!-- Header -->
+      <header class="modal-header">
+        <div class="modal-header-text">
+          <h2 id="crear-envio-title" class="modal-title">Registrar Nuevo Envío</h2>
+          <p class="modal-subtitle">
+            Ingresa los datos generales del envío y agrega los ítems de carga correspondientes.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </header>
+
+      <!-- Error banner -->
+      @if (errorMessage()) {
+        <div class="nx-alert alert-error" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al registrar envío</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <!-- Section 1: Datos Generales -->
+        <section class="form-section" aria-labelledby="section-general-title">
+          <h3 id="section-general-title" class="section-title">
+            <span class="section-icon" aria-hidden="true">📋</span>
+            Datos Generales
+          </h3>
+
+          <div class="form-grid">
+            <!-- Cliente -->
+            <div class="form-group span-full">
+              <label for="envio-cliente" class="form-label">Cliente *</label>
+              <select
+                id="envio-cliente"
+                class="nx-field"
+                [class.nx-field-error]="isClienteInvalid()"
+                [ngModel]="clienteId()"
+                (ngModelChange)="clienteId.set($event)"
+                name="clienteId"
+                [disabled]="isSubmitting()"
+              >
+                <option value="" disabled>Seleccione un cliente…</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id">
+                    {{ c.razonSocial }} ({{ c.formattedCuit || c.cuit }})
+                  </option>
+                }
+              </select>
+              @if (isClienteInvalid()) {
+                <span class="nx-inline-error">Debes seleccionar un cliente.</span>
+              }
+            </div>
+
+            <!-- Origen -->
+            <div class="form-group">
+              <label for="envio-origen" class="form-label">Origen *</label>
+              <input
+                id="envio-origen"
+                type="text"
+                class="nx-field"
+                [class.nx-field-error]="isOrigenInvalid()"
+                placeholder="Ej. Centro Distribución Norte"
+                [ngModel]="origen()"
+                (ngModelChange)="origen.set($event)"
+                name="origen"
+                [disabled]="isSubmitting()"
+                maxlength="200"
+              />
+              @if (isOrigenInvalid()) {
+                <span class="nx-inline-error">El origen es obligatorio.</span>
+              }
+            </div>
+
+            <!-- Destino -->
+            <div class="form-group">
+              <label for="envio-destino" class="form-label">Destino *</label>
+              <input
+                id="envio-destino"
+                type="text"
+                class="nx-field"
+                [class.nx-field-error]="isDestinoInvalid()"
+                placeholder="Ej. Almacén Central"
+                [ngModel]="destino()"
+                (ngModelChange)="destino.set($event)"
+                name="destino"
+                [disabled]="isSubmitting()"
+                maxlength="200"
+              />
+              @if (isDestinoInvalid()) {
+                <span class="nx-inline-error">El destino es obligatorio.</span>
+              }
+            </div>
+
+            <!-- Fecha Programada -->
+            <div class="form-group">
+              <label for="envio-fecha-programada" class="form-label">
+                Fecha Programada (opcional)
+              </label>
+              <input
+                id="envio-fecha-programada"
+                type="datetime-local"
+                class="nx-field"
+                [ngModel]="fechaProgramada()"
+                (ngModelChange)="fechaProgramada.set($event)"
+                name="fechaProgramada"
+                [disabled]="isSubmitting()"
+              />
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-group span-full">
+              <label for="envio-observaciones" class="form-label"> Observaciones (opcional) </label>
+              <textarea
+                id="envio-observaciones"
+                class="nx-field textarea-field"
+                rows="2"
+                placeholder="Indicaciones especiales, horario de entrega, etc."
+                [ngModel]="observaciones()"
+                (ngModelChange)="observaciones.set($event)"
+                name="observaciones"
+                [disabled]="isSubmitting()"
+                maxlength="500"
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Ítems de Carga Dinámicos -->
+        <section class="form-section" aria-labelledby="section-items-title">
+          <div class="section-header">
+            <h3 id="section-items-title" class="section-title">
+              <span class="section-icon" aria-hidden="true">📦</span>
+              Ítems de Carga
+            </h3>
+            <button
+              type="button"
+              class="btn-add-item"
+              (click)="addItem()"
+              [disabled]="isSubmitting()"
+            >
+              + Agregar otro ítem
+            </button>
+          </div>
+
+          <div class="items-table-container">
+            <div class="items-table">
+              <div class="items-header-row">
+                <span class="col-desc">Descripción *</span>
+                <span class="col-cant">Cantidad *</span>
+                <span class="col-peso">Peso Unit. (kg) *</span>
+                <span class="col-vol">Vol. Unit. (m³)</span>
+                <span class="col-actions" aria-hidden="true"></span>
+              </div>
+
+              @for (item of items(); track $index) {
+                <div
+                  class="item-row"
+                  [class.has-error]="
+                    isItemDescripcionInvalid($index) ||
+                    isItemPesoInvalid($index) ||
+                    isItemCantidadInvalid($index) ||
+                    isItemVolumenInvalid($index)
+                  "
+                >
+                  <div class="col-desc">
+                    <input
+                      type="text"
+                      class="nx-field field-sm"
+                      [class.nx-field-error]="isItemDescripcionInvalid($index)"
+                      placeholder="Descripción del ítem"
+                      [ngModel]="item.descripcion"
+                      (ngModelChange)="updateItem($index, 'descripcion', $event)"
+                      [name]="'item-desc-' + $index"
+                      [disabled]="isSubmitting()"
+                      maxlength="150"
+                      aria-label="Descripción del ítem"
+                    />
+                    @if (isItemDescripcionInvalid($index)) {
+                      <span class="nx-inline-error">Requerido</span>
+                    }
+                  </div>
+
+                  <div class="col-cant">
+                    <input
+                      type="number"
+                      class="nx-field field-sm"
+                      [class.nx-field-error]="isItemCantidadInvalid($index)"
+                      min="1"
+                      step="1"
+                      [ngModel]="item.cantidad"
+                      (ngModelChange)="updateItem($index, 'cantidad', $event)"
+                      [name]="'item-cant-' + $index"
+                      [disabled]="isSubmitting()"
+                      aria-label="Cantidad"
+                    />
+                    @if (isItemCantidadInvalid($index)) {
+                      <span class="nx-inline-error">Mín 1</span>
+                    }
+                  </div>
+
+                  <div class="col-peso">
+                    <input
+                      type="number"
+                      class="nx-field field-sm"
+                      [class.nx-field-error]="isItemPesoInvalid($index)"
+                      min="0.01"
+                      step="0.1"
+                      placeholder="0.0"
+                      [ngModel]="item.pesoKg"
+                      (ngModelChange)="updateItem($index, 'pesoKg', $event)"
+                      [name]="'item-peso-' + $index"
+                      [disabled]="isSubmitting()"
+                      aria-label="Peso unitario en kg"
+                    />
+                    @if (isItemPesoInvalid($index)) {
+                      <span class="nx-inline-error">&gt; 0</span>
+                    }
+                  </div>
+
+                  <div class="col-vol">
+                    <input
+                      type="number"
+                      class="nx-field field-sm"
+                      [class.nx-field-error]="isItemVolumenInvalid($index)"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      [ngModel]="item.volumenM3"
+                      (ngModelChange)="updateItem($index, 'volumenM3', $event)"
+                      [name]="'item-vol-' + $index"
+                      [disabled]="isSubmitting()"
+                      aria-label="Volumen unitario en metros cúbicos"
+                    />
+                    @if (isItemVolumenInvalid($index)) {
+                      <span class="nx-inline-error">≥ 0</span>
+                    }
+                  </div>
+
+                  <div class="col-actions">
+                    <button
+                      type="button"
+                      class="btn-remove-item"
+                      (click)="removeItem($index)"
+                      [disabled]="items().length <= 1 || isSubmitting()"
+                      [title]="
+                        items().length <= 1 ? 'Se requiere al menos un ítem' : 'Eliminar ítem'
+                      "
+                      aria-label="Eliminar ítem"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Barra reactiva de totales calculados en tiempo real -->
+        <section class="totals-bar" aria-label="Totales calculados del envío">
+          <div class="total-card">
+            <span class="total-label">Total Bultos</span>
+            <span class="total-value">{{ totalBultos() }}</span>
+          </div>
+
+          <div class="total-card">
+            <span class="total-label">Total Peso</span>
+            <span class="total-value">{{ totalPesoKg() | number: '1.2-2' }} <small>kg</small></span>
+          </div>
+
+          <div class="total-card">
+            <span class="total-label">Total Volumen</span>
+            <span class="total-value"
+              >{{ totalVolumenM3() | number: '1.3-3' }} <small>m³</small></span
+            >
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="isSubmitting()"
+            [attr.aria-busy]="isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="nx-spinner" aria-hidden="true"></span>
+              <span>Creando…</span>
+            } @else {
+              <span>Crear envío</span>
+            }
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}

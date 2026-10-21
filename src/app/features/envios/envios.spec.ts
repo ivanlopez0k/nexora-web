@@ -3,10 +3,14 @@ import { of, throwError } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { Envios } from './envios';
 import { EnvioService } from './services/envio.service';
+import { ClienteService } from '../clientes/services/cliente.service';
 import { AuthTokenService } from '../../shared/auth/auth-token.service';
 import { ROLES } from '../../shared/auth/permissions';
+import type { Cliente } from '../clientes/models/cliente.models';
 import type {
+  CrearEnvioRequest,
   EnvioListItem,
+  EnvioResponse,
   EnviosMetricas,
   PagedResult,
 } from './models/envio.models';
@@ -18,11 +22,38 @@ describe('Envios Component', () => {
     getEnvios: ReturnType<typeof vi.fn>;
     getMetricas: ReturnType<typeof vi.fn>;
     getEnvioById: ReturnType<typeof vi.fn>;
+    createEnvio: ReturnType<typeof vi.fn>;
+  };
+  let mockClienteService: {
+    getClientes: ReturnType<typeof vi.fn>;
   };
   let mockTokenService: {
     getRoles: ReturnType<typeof vi.fn>;
     getClaims: ReturnType<typeof vi.fn>;
   };
+
+  const mockClientes: Cliente[] = [
+    {
+      id: 'cli-1',
+      razonSocial: 'Distribuidora Pampeana S.A.',
+      cuit: '30500010912',
+      formattedCuit: '30-50001091-2',
+      estado: 'ACTIVO',
+      fechaAlta: '2026-01-01',
+      cantidadContactos: 2,
+      cantidadDirecciones: 1,
+    },
+    {
+      id: 'cli-2',
+      razonSocial: 'Logística Andina',
+      cuit: '30600020913',
+      formattedCuit: '30-60002091-3',
+      estado: 'ACTIVO',
+      fechaAlta: '2026-02-01',
+      cantidadContactos: 1,
+      cantidadDirecciones: 3,
+    },
+  ];
 
   const mockEnvios: EnvioListItem[] = [
     {
@@ -92,6 +123,11 @@ describe('Envios Component', () => {
       getEnvios: vi.fn().mockReturnValue(of(mockPaged)),
       getMetricas: vi.fn().mockReturnValue(of(mockMetricas)),
       getEnvioById: vi.fn(),
+      createEnvio: vi.fn(),
+    };
+
+    mockClienteService = {
+      getClientes: vi.fn().mockReturnValue(of({ items: mockClientes, totalItems: 2 })),
     };
 
     mockTokenService = {
@@ -103,6 +139,7 @@ describe('Envios Component', () => {
       imports: [Envios],
       providers: [
         { provide: EnvioService, useValue: mockEnvioService },
+        { provide: ClienteService, useValue: mockClienteService },
         { provide: AuthTokenService, useValue: mockTokenService },
       ],
     }).compileComponents();
@@ -139,7 +176,7 @@ describe('Envios Component', () => {
     expect(values[0].textContent).toContain('45'); // Activos
     expect(values[1].textContent).toContain('18'); // En Tránsito
     expect(values[2].textContent).toContain('22'); // Entregados Hoy
-    expect(values[3].textContent).toContain('3');  // Incidencias
+    expect(values[3].textContent).toContain('3'); // Incidencias
     expect(values[4].textContent).toContain('96.5%'); // Cumplimiento
   });
 
@@ -151,7 +188,7 @@ describe('Envios Component', () => {
     expect(component.search()).toBe('NEX-2026-0001');
     expect(component.page()).toBe(1);
     expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ search: 'NEX-2026-0001', page: 1 })
+      expect.objectContaining({ search: 'NEX-2026-0001', page: 1 }),
     );
   });
 
@@ -163,7 +200,7 @@ describe('Envios Component', () => {
     expect(component.estadoFilter()).toBe('EnTransito');
     expect(component.page()).toBe(1);
     expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ estado: 'EnTransito', page: 1 })
+      expect.objectContaining({ estado: 'EnTransito', page: 1 }),
     );
   });
 
@@ -172,12 +209,12 @@ describe('Envios Component', () => {
 
     component.onFechaDesdeChange('2026-10-01');
     expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ fechaDesde: '2026-10-01', page: 1 })
+      expect.objectContaining({ fechaDesde: '2026-10-01', page: 1 }),
     );
 
     component.onFechaHastaChange('2026-10-31');
     expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ fechaHasta: '2026-10-31', page: 1 })
+      expect.objectContaining({ fechaHasta: '2026-10-31', page: 1 }),
     );
   });
 
@@ -198,7 +235,7 @@ describe('Envios Component', () => {
     expect(component.fechaHasta()).toBe('');
     expect(component.page()).toBe(1);
     expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 1, search: undefined, estado: undefined })
+      expect.objectContaining({ page: 1, search: undefined, estado: undefined }),
     );
   });
 
@@ -207,15 +244,11 @@ describe('Envios Component', () => {
 
     component.onNextPage();
     expect(component.page()).toBe(2);
-    expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 2 })
-    );
+    expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
 
     component.onPrevPage();
     expect(component.page()).toBe(1);
-    expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 1 })
-    );
+    expect(mockEnvioService.getEnvios).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
   });
 
   it('does not paginate beyond bounds', () => {
@@ -257,13 +290,15 @@ describe('Envios Component', () => {
         totalPages: 0,
         hasNextPage: false,
         hasPreviousPage: false,
-      })
+      }),
     );
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.empty-state')).toBeTruthy();
-    expect(compiled.querySelector('.empty-state h3')?.textContent).toContain('No se encontraron envíos');
+    expect(compiled.querySelector('.empty-state h3')?.textContent).toContain(
+      'No se encontraron envíos',
+    );
   });
 
   it('resolves semantic badge config for each state', () => {
@@ -294,5 +329,145 @@ describe('Envios Component', () => {
     expect(component.formatDate(null)).toBe('—');
     expect(component.formatDate(undefined)).toBe('—');
     expect(component.formatDate('2026-10-25T10:00:00Z')).toMatch(/\d{2}\/\d{2}\/\d{4}/);
+  });
+
+  describe('Create Envio Modal Integration', () => {
+    it('loads active clients on init', () => {
+      fixture.detectChanges();
+
+      expect(mockClienteService.getClientes).toHaveBeenCalledWith({ pageSize: 100 });
+      expect(component.clientes().length).toBe(2);
+      expect(component.clientes()[0].razonSocial).toBe('Distribuidora Pampeana S.A.');
+    });
+
+    it('opens and closes create modal correctly', () => {
+      fixture.detectChanges();
+
+      expect(component.createModalOpen()).toBe(false);
+
+      component.openCreateModal();
+      expect(component.createModalOpen()).toBe(true);
+      expect(component.createModalError()).toBeNull();
+
+      component.closeCreateModal();
+      expect(component.createModalOpen()).toBe(false);
+    });
+
+    it('triggers openCreateModal when clicking "+ Nuevo Envío" button', () => {
+      fixture.detectChanges();
+
+      const button = (fixture.nativeElement as HTMLElement).querySelector(
+        '.btn-create',
+      ) as HTMLButtonElement;
+      expect(button).toBeTruthy();
+
+      button.click();
+      fixture.detectChanges();
+
+      expect(component.createModalOpen()).toBe(true);
+    });
+
+    it('submits new shipment, closes modal and reloads envios and metricas on success', () => {
+      const mockRequest: CrearEnvioRequest = {
+        clienteId: 'cli-1',
+        origen: 'CD Norte',
+        destino: 'Almacén Central',
+        fechaProgramada: '2026-10-25T14:00:00.000Z',
+        observaciones: 'Frágil',
+        items: [
+          {
+            descripcion: 'Cajas de componentes',
+            pesoKg: 10,
+            volumenM3: 0.5,
+            cantidad: 2,
+          },
+        ],
+      };
+
+      const mockResponse: EnvioResponse = {
+        id: 'env-created-1',
+        numeroSeguimiento: 'NEX-2026-0003',
+        clienteId: 'cli-1',
+        clienteRazonSocial: 'Distribuidora Pampeana S.A.',
+        origen: 'CD Norte',
+        destino: 'Almacén Central',
+        estado: 'Solicitado',
+        fechaProgramada: '2026-10-25T14:00:00.000Z',
+        observaciones: 'Frágil',
+        pesoTotalKg: 20,
+        volumenTotalM3: 1,
+        cantidadItems: 2,
+        fechaCreacion: '2026-10-20T20:00:00Z',
+      };
+
+      mockEnvioService.createEnvio.mockReturnValue(of(mockResponse));
+      fixture.detectChanges();
+
+      component.openCreateModal();
+      expect(component.createModalOpen()).toBe(true);
+
+      component.onSubmitCreateEnvio(mockRequest);
+
+      expect(mockEnvioService.createEnvio).toHaveBeenCalledWith(mockRequest);
+      expect(component.createModalSubmitting()).toBe(false);
+      expect(component.createModalOpen()).toBe(false);
+      expect(component.createModalError()).toBeNull();
+      // Reloaded envios and metricas
+      expect(mockEnvioService.getEnvios).toHaveBeenCalledTimes(2); // init + reload
+      expect(mockEnvioService.getMetricas).toHaveBeenCalledTimes(2); // init + reload
+    });
+
+    it('handles submission error gracefully and sets modal error message', () => {
+      const mockRequest: CrearEnvioRequest = {
+        clienteId: 'cli-1',
+        origen: 'CD Norte',
+        destino: 'Almacén Central',
+        fechaProgramada: null,
+        observaciones: null,
+        items: [
+          {
+            descripcion: 'Cajas',
+            pesoKg: 5,
+            volumenM3: null,
+            cantidad: 1,
+          },
+        ],
+      };
+
+      mockEnvioService.createEnvio.mockReturnValue(
+        throwError(() => ({
+          error: { message: 'El cliente no se encuentra activo.' },
+        })),
+      );
+      fixture.detectChanges();
+
+      component.openCreateModal();
+      component.onSubmitCreateEnvio(mockRequest);
+
+      expect(mockEnvioService.createEnvio).toHaveBeenCalledWith(mockRequest);
+      expect(component.createModalSubmitting()).toBe(false);
+      expect(component.createModalOpen()).toBe(true);
+      expect(component.createModalError()).toBe('El cliente no se encuentra activo.');
+    });
+
+    it('falls back to default message if server error has no message field', () => {
+      const mockRequest: CrearEnvioRequest = {
+        clienteId: 'cli-1',
+        origen: 'CD Norte',
+        destino: 'Almacén Central',
+        items: [{ descripcion: 'Cajas', pesoKg: 5, cantidad: 1 }],
+      };
+
+      mockEnvioService.createEnvio.mockReturnValue(throwError(() => ({})));
+      fixture.detectChanges();
+
+      component.openCreateModal();
+      component.onSubmitCreateEnvio(mockRequest);
+
+      expect(component.createModalSubmitting()).toBe(false);
+      expect(component.createModalError()).toBe(
+        'No se pudo registrar el envío. Intente nuevamente.',
+      );
+    });
   });
 });

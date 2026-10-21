@@ -3,8 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import type {
+  CrearEnvioRequest,
   EnvioListItem,
   EnvioQueryParams,
+  EnvioResponse,
   EnviosMetricas,
   PagedResult,
 } from '../models/envio.models';
@@ -59,5 +61,9 @@ export class EnvioService {
 
   getEnvioById(id: string): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/${id}`);
+  }
+
+  createEnvio(request: CrearEnvioRequest): Observable<EnvioResponse> {
+    return this.http.post<EnvioResponse>(this.baseUrl, request);
   }
 }

@@ -2,12 +2,16 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EnvioService } from './services/envio.service';
+import { ClienteService } from '../clientes/services/cliente.service';
 import { AuthTokenService } from '../../shared/auth/auth-token.service';
 import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions';
+import { CrearEnvioModal } from './components/crear-envio-modal/crear-envio-modal';
+import type { Cliente } from '../clientes/models/cliente.models';
 import {
   ESTADOS_ENVIO_CONFIG,
   EstadoConfig,
   EstadoEnvio,
+  CrearEnvioRequest,
   EnvioListItem,
   EnviosMetricas,
   PagedResult,
@@ -16,19 +20,26 @@ import {
 @Component({
   selector: 'app-envios',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CrearEnvioModal],
   templateUrl: './envios.html',
   styleUrl: './envios.css',
 })
 export class Envios implements OnInit {
   private readonly envioService = inject(EnvioService);
+  private readonly clienteService = inject(ClienteService);
   private readonly tokenService = inject(AuthTokenService);
 
   readonly envios = signal<EnvioListItem[]>([]);
   readonly metricas = signal<EnviosMetricas | null>(null);
+  readonly clientes = signal<Cliente[]>([]);
   readonly loading = signal<boolean>(false);
   readonly loadingMetricas = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // Create Envio Modal State
+  readonly createModalOpen = signal<boolean>(false);
+  readonly createModalSubmitting = signal<boolean>(false);
+  readonly createModalError = signal<string | null>(null);
 
   // Filters & Pagination
   readonly search = signal<string>('');
@@ -63,6 +74,48 @@ export class Envios implements OnInit {
   ngOnInit(): void {
     this.loadMetricas();
     this.loadEnvios();
+    this.loadClientes();
+  }
+
+  loadClientes(): void {
+    this.clienteService.getClientes({ pageSize: 100 }).subscribe({
+      next: (result) => {
+        this.clientes.set(result.items);
+      },
+      error: () => {},
+    });
+  }
+
+  openCreateModal(): void {
+    this.createModalError.set(null);
+    this.createModalOpen.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.createModalOpen.set(false);
+    this.createModalError.set(null);
+  }
+
+  onSubmitCreateEnvio(request: CrearEnvioRequest): void {
+    this.createModalSubmitting.set(true);
+    this.createModalError.set(null);
+
+    this.envioService.createEnvio(request).subscribe({
+      next: () => {
+        this.createModalSubmitting.set(false);
+        this.createModalOpen.set(false);
+        this.loadEnvios();
+        this.loadMetricas();
+      },
+      error: (err) => {
+        this.createModalSubmitting.set(false);
+        const msg =
+          err?.error?.message ||
+          err?.message ||
+          'No se pudo registrar el envío. Intente nuevamente.';
+        this.createModalError.set(msg);
+      },
+    });
   }
 
   loadMetricas(): void {

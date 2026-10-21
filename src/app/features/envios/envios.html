@@ -49,7 +49,7 @@
       <p class="page-subtitle">Control operativo, seguimiento en ruta y trazabilidad de carga.</p>
     </div>
     @if (canManage()) {
-      <button type="button" class="nx-button btn-create">
+      <button type="button" class="nx-button btn-create" (click)="openCreateModal()">
         <span>+ Nuevo Envío</span>
       </button>
     }
@@ -174,7 +174,10 @@
                 <td>
                   <div class="cargo-cell">
                     <span class="cargo-weight">{{ envio.pesoTotalKg | number }} kg</span>
-                    <span class="cargo-meta">{{ envio.cantidadItems }} bultos · {{ envio.volumenTotalM3 | number }} m³</span>
+                    <span class="cargo-meta"
+                      >{{ envio.cantidadItems }} bultos ·
+                      {{ envio.volumenTotalM3 | number }} m³</span
+                    >
                   </div>
                 </td>
                 <td>
@@ -194,10 +197,7 @@
                   }
                 </td>
                 <td>
-                  <span
-                    class="status-badge"
-                    [ngClass]="getEstadoConfig(envio.estado).badgeClass"
-                  >
+                  <span class="status-badge" [ngClass]="getEstadoConfig(envio.estado).badgeClass">
                     <span class="status-dot" aria-hidden="true"></span>
                     {{ getEstadoConfig(envio.estado).label }}
                   </span>
@@ -205,7 +205,9 @@
                 <td>
                   <div class="date-cell">
                     <span class="date-primary">{{ formatDate(envio.fechaProgramada) }}</span>
-                    <span class="date-secondary">Creado: {{ formatDate(envio.fechaCreacion) }}</span>
+                    <span class="date-secondary"
+                      >Creado: {{ formatDate(envio.fechaCreacion) }}</span
+                    >
                   </div>
                 </td>
               </tr>
@@ -219,12 +221,7 @@
           Mostrando {{ envios().length }} de {{ totalCount() }} envíos
         </div>
         <div class="pagination-controls">
-          <button
-            type="button"
-            class="btn-page"
-            (click)="onPrevPage()"
-            [disabled]="page() <= 1"
-          >
+          <button type="button" class="btn-page" (click)="onPrevPage()" [disabled]="page() <= 1">
             ← Anterior
           </button>
           <span class="page-indicator">Página {{ page() }} de {{ totalPages() }}</span>
@@ -240,4 +237,14 @@
       </footer>
     }
   </div>
+
+  <!-- Modal Crear Envío -->
+  <app-crear-envio-modal
+    [isOpen]="createModalOpen()"
+    [isSubmitting]="createModalSubmitting()"
+    [errorMessage]="createModalError()"
+    [clientes]="clientes()"
+    (close)="closeCreateModal()"
+    (submitEnvio)="onSubmitCreateEnvio($event)"
+  />
 </div>
