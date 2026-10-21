@@ -1,0 +1,155 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { EnvioService } from './envio.service';
+import type {
+  EnvioListItem,
+  EnviosMetricas,
+  PagedResult,
+} from '../models/envio.models';
+
+describe('EnvioService', () => {
+  let service: EnvioService;
+  let httpMock: HttpTestingController;
+
+  const mockEnvio: EnvioListItem = {
+    id: 'env-001',
+    numeroSeguimiento: 'NEX-2026-0001',
+    clienteId: 'cli-001',
+    clienteRazonSocial: 'Logística Sur S.A.',
+    origen: 'Centro Distribución Norte',
+    destino: 'Almacén Central',
+    estado: 'EnTransito',
+    fechaProgramada: '2026-10-25T10:00:00Z',
+    pesoTotalKg: 1250.5,
+    volumenTotalM3: 8.2,
+    cantidadItems: 42,
+    fechaCreacion: '2026-10-20T08:00:00Z',
+    vehiculoId: 'veh-001',
+    vehiculoPatente: 'AF 123 CD',
+    choferId: 'cho-001',
+    choferNombreCompleto: 'Carlos Gómez',
+  };
+
+  const mockPaged: PagedResult<EnvioListItem> = {
+    items: [mockEnvio],
+    totalCount: 1,
+    pageNumber: 1,
+    pageSize: 10,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  };
+
+  const mockMetricas: EnviosMetricas = {
+    totalEnvios: 150,
+    enviosActivos: 45,
+    enTransito: 18,
+    entregadosHoy: 22,
+    incidenciasAbiertas: 3,
+    porcentajeCumplimiento: 96.5,
+    enviosPorEstado: {
+      Solicitado: 5,
+      Preparando: 10,
+      EnTransito: 18,
+      Entregado: 110,
+      ConIncidencia: 3,
+      Cancelado: 4,
+    },
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [EnvioService, provideHttpClient(), provideHttpClientTesting()],
+    });
+
+    service = TestBed.inject(EnvioService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  describe('getEnvios', () => {
+    it('requests GET /api/v1/envios without query params when empty', () => {
+      service.getEnvios().subscribe((res) => {
+        expect(res).toEqual(mockPaged);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().length).toBe(0);
+      req.flush(mockPaged);
+    });
+
+    it('encodes all query parameters accurately', () => {
+      service
+        .getEnvios({
+          page: 2,
+          pageSize: 25,
+          search: 'NEX-2026',
+          estado: 'EnTransito',
+          clienteId: 'cli-001',
+          fechaDesde: '2026-10-01',
+          fechaHasta: '2026-10-31',
+        })
+        .subscribe((res) => {
+          expect(res.items.length).toBe(1);
+        });
+
+      const req = httpMock.expectOne((r) => r.url === '/api/v1/envios');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('page')).toBe('2');
+      expect(req.request.params.get('pageSize')).toBe('25');
+      expect(req.request.params.get('search')).toBe('NEX-2026');
+      expect(req.request.params.get('estado')).toBe('EnTransito');
+      expect(req.request.params.get('clienteId')).toBe('cli-001');
+      expect(req.request.params.get('fechaDesde')).toBe('2026-10-01');
+      expect(req.request.params.get('fechaHasta')).toBe('2026-10-31');
+      req.flush(mockPaged);
+    });
+  });
+
+  describe('getMetricas', () => {
+    it('requests GET /api/v1/envios/metricas without params', () => {
+      service.getMetricas().subscribe((res) => {
+        expect(res).toEqual(mockMetricas);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios/metricas');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.keys().length).toBe(0);
+      req.flush(mockMetricas);
+    });
+
+    it('passes clienteId and fechaReferencia params when supplied', () => {
+      service.getMetricas('cli-999', '2026-10-20').subscribe((res) => {
+        expect(res.totalEnvios).toBe(150);
+      });
+
+      const req = httpMock.expectOne((r) => r.url === '/api/v1/envios/metricas');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('clienteId')).toBe('cli-999');
+      expect(req.request.params.get('fechaReferencia')).toBe('2026-10-20');
+      req.flush(mockMetricas);
+    });
+  });
+
+  describe('getEnvioById', () => {
+    it('requests GET /api/v1/envios/:id', () => {
+      service.getEnvioById('env-001').subscribe((res) => {
+        expect(res).toEqual(mockEnvio);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios/env-001');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockEnvio);
+    });
+  });
+});
