@@ -7,6 +7,8 @@ import type {
   AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
   DespacharEnvioRequest,
+  EnvioHistorialEstadoResponse,
+  EnvioIncidenciaResponse,
   EnvioListItem,
   EnvioResponse,
   EnviosMetricas,
@@ -147,13 +149,108 @@ describe('EnvioService', () => {
 
   describe('getEnvioById', () => {
     it('requests GET /api/v1/envios/:id', () => {
+      const mockDetalle: EnvioResponse = {
+        id: 'env-001',
+        numeroSeguimiento: 'NEX-2026-0001',
+        clienteId: 'cli-001',
+        clienteRazonSocial: 'Logística Sur S.A.',
+        origen: 'Centro Distribución Norte',
+        destino: 'Almacén Central',
+        estado: 'EnTransito',
+        fechaProgramada: '2026-10-25T10:00:00Z',
+        observaciones: 'Manejar con cuidado',
+        pesoTotalKg: 1250.5,
+        volumenTotalM3: 8.2,
+        cantidadItems: 42,
+        fechaCreacion: '2026-10-20T08:00:00Z',
+        items: [
+          {
+            id: 'item-1',
+            descripcion: 'Cajas de repuestos',
+            pesoKg: 10,
+            volumenM3: 0.2,
+            cantidad: 5,
+            pesoTotalKg: 50,
+            volumenTotalM3: 1,
+          },
+        ],
+        vehiculoId: 'veh-001',
+        vehiculoPatente: 'AF 123 CD',
+        vehiculoModelo: 'Mercedes-Benz Actros',
+        choferId: 'cho-001',
+        choferNombreCompleto: 'Carlos Gómez',
+      };
+
       service.getEnvioById('env-001').subscribe((res) => {
-        expect(res).toEqual(mockEnvio);
+        expect(res).toEqual(mockDetalle);
       });
 
       const req = httpMock.expectOne('/api/v1/envios/env-001');
       expect(req.request.method).toBe('GET');
-      req.flush(mockEnvio);
+      req.flush(mockDetalle);
+    });
+  });
+
+  describe('getHistorial', () => {
+    it('requests GET /api/v1/envios/:id/historial and returns status change history', () => {
+      const mockHistorial: EnvioHistorialEstadoResponse[] = [
+        {
+          id: 'hist-1',
+          envioId: 'env-001',
+          estadoAnterior: 'Solicitado',
+          estadoNuevo: 'Preparando',
+          motivo: 'Iniciando preparación',
+          usuario: 'operador1',
+          fechaHora: '2026-10-20T09:00:00Z',
+        },
+        {
+          id: 'hist-2',
+          envioId: 'env-001',
+          estadoAnterior: 'Preparando',
+          estadoNuevo: 'Asignado',
+          motivo: 'Recursos asignados',
+          usuario: 'coordinador',
+          fechaHora: '2026-10-20T10:30:00Z',
+        },
+      ];
+
+      service.getHistorial('env-001').subscribe((res) => {
+        expect(res).toEqual(mockHistorial);
+        expect(res.length).toBe(2);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios/env-001/historial');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockHistorial);
+    });
+  });
+
+  describe('getIncidencias', () => {
+    it('requests GET /api/v1/envios/:id/incidencias and returns reported incidents', () => {
+      const mockIncidencias: EnvioIncidenciaResponse[] = [
+        {
+          id: 'inc-1',
+          envioId: 'env-001',
+          tipo: 'Demora',
+          severidad: 'Media',
+          estado: 'Abierta',
+          descripcion: 'Demora por congestionamiento en ruta nacional 9',
+          resolucion: null,
+          usuarioReporta: 'chofer_cgomez',
+          usuarioResuelve: null,
+          fechaReporte: '2026-10-20T11:15:00Z',
+          fechaResolucion: null,
+        },
+      ];
+
+      service.getIncidencias('env-001').subscribe((res) => {
+        expect(res).toEqual(mockIncidencias);
+        expect(res.length).toBe(1);
+      });
+
+      const req = httpMock.expectOne('/api/v1/envios/env-001/incidencias');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockIncidencias);
     });
   });
 

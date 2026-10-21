@@ -1,0 +1,327 @@
+@if (isOpen()) {
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="detalle-envio-title"
+  >
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <header class="modal-header">
+        <div class="modal-header-info">
+          <div class="header-badges">
+            <span class="tracking-badge">{{ envio()?.numeroSeguimiento || 'Cargando...' }}</span>
+            @if (envio(); as e) {
+              <span class="status-badge" [ngClass]="getEstadoConfig(e.estado).badgeClass">
+                <span class="status-dot" aria-hidden="true"></span>
+                {{ getEstadoConfig(e.estado).label }}
+              </span>
+            }
+          </div>
+          <h2 id="detalle-envio-title" class="modal-title">Detalle del Envío</h2>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="onClose()" aria-label="Cerrar modal">
+          &times;
+        </button>
+      </header>
+
+      <!-- Loading State -->
+      @if (loading()) {
+        <div class="modal-loading-state">
+          <div class="spinner-large" aria-hidden="true"></div>
+          <p>Cargando información del envío...</p>
+        </div>
+      }
+
+      <!-- Error State -->
+      @if (!loading() && error()) {
+        <div class="nx-alert alert-error" role="alert">
+          <span class="nx-alert-icon" aria-hidden="true">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al cargar envío</span>
+            <span class="nx-alert-text">{{ error() }}</span>
+            @if (envioId()) {
+              <button type="button" class="btn-retry" (click)="retry()">Reintentar</button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Content (when envio loaded) -->
+      @if (!loading() && envio(); as e) {
+        <div class="modal-content-scroll">
+          <!-- Section 1: Overview Grid -->
+          <section class="detail-section" aria-labelledby="section-overview-title">
+            <h3 id="section-overview-title" class="section-title">
+              <span class="section-icon" aria-hidden="true">📋</span>
+              Información General
+            </h3>
+            <div class="overview-grid">
+              <div class="info-card client-card">
+                <span class="info-label">Cliente</span>
+                <span class="info-value-highlight">{{ e.clienteRazonSocial }}</span>
+              </div>
+              <div class="info-card route-card">
+                <span class="info-label">Ruta</span>
+                <div class="route-display">
+                  <span class="route-point" [title]="e.origen">{{ e.origen }}</span>
+                  <span class="route-arrow" aria-hidden="true">→</span>
+                  <span class="route-point" [title]="e.destino">{{ e.destino }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dates Grid -->
+            <div class="dates-grid">
+              <div class="date-item">
+                <span class="info-label">Fecha Creación</span>
+                <span class="date-val">{{ formatDateTime(e.fechaCreacion) }}</span>
+              </div>
+              <div class="date-item">
+                <span class="info-label">Fecha Programada</span>
+                <span class="date-val">{{ formatDate(e.fechaProgramada) }}</span>
+              </div>
+              <div class="date-item">
+                <span class="info-label">Fecha Despacho</span>
+                <span class="date-val">{{ formatDateTime(e.fechaDespacho) }}</span>
+              </div>
+              <div class="date-item">
+                <span class="info-label">Fecha Entrega</span>
+                <span class="date-val">{{ formatDateTime(e.fechaEntrega) }}</span>
+              </div>
+            </div>
+
+            @if (e.observaciones) {
+              <div class="observaciones-box">
+                <span class="info-label">Observaciones</span>
+                <p class="observaciones-text">{{ e.observaciones }}</p>
+              </div>
+            }
+          </section>
+
+          <!-- Section 2: Recursos Asignados -->
+          <section class="detail-section" aria-labelledby="section-recursos-title">
+            <h3 id="section-recursos-title" class="section-title">
+              <span class="section-icon" aria-hidden="true">🚛</span>
+              Recursos Asignados
+            </h3>
+            <div class="resources-grid">
+              <!-- Vehículo -->
+              <div class="resource-card">
+                <span class="resource-type-label">Vehículo</span>
+                @if (e.vehiculoPatente) {
+                  <div class="resource-body">
+                    <span class="vehicle-tag">{{ e.vehiculoPatente }}</span>
+                    <span class="resource-name">{{ e.vehiculoModelo || 'Vehículo asignado' }}</span>
+                  </div>
+                } @else {
+                  <span class="unassigned-badge">Sin vehículo asignado</span>
+                }
+              </div>
+
+              <!-- Chofer -->
+              <div class="resource-card">
+                <span class="resource-type-label">Chofer</span>
+                @if (e.choferNombreCompleto) {
+                  <div class="resource-body">
+                    <span class="driver-icon" aria-hidden="true">👤</span>
+                    <span class="resource-name">{{ e.choferNombreCompleto }}</span>
+                  </div>
+                } @else {
+                  <span class="unassigned-badge">Sin chofer asignado</span>
+                }
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 3: Bultos e Ítems de Carga -->
+          <section class="detail-section" aria-labelledby="section-items-title">
+            <div class="section-header-row">
+              <h3 id="section-items-title" class="section-title">
+                <span class="section-icon" aria-hidden="true">📦</span>
+                Bultos e Ítems de Carga
+              </h3>
+              <!-- Summary Bar -->
+              <div class="cargo-summary-bar">
+                <span class="summary-pill">
+                  <strong>{{ totalBultos() }}</strong> bultos
+                </span>
+                <span class="summary-pill">
+                  <strong>{{ totalPesoKg() | number: '1.1-2' }}</strong> kg
+                </span>
+                <span class="summary-pill">
+                  <strong>{{ totalVolumenM3() | number: '1.1-3' }}</strong> m³
+                </span>
+              </div>
+            </div>
+
+            @if (items().length > 0) {
+              <div class="table-responsive">
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Descripción</th>
+                      <th scope="col" class="text-right">Cantidad</th>
+                      <th scope="col" class="text-right">Peso Unit.</th>
+                      <th scope="col" class="text-right">Volumen Unit.</th>
+                      <th scope="col" class="text-right">Peso Total</th>
+                      <th scope="col" class="text-right">Volumen Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of items(); track item.id) {
+                      <tr>
+                        <td class="item-desc">{{ item.descripcion }}</td>
+                        <td class="text-right">{{ item.cantidad }}</td>
+                        <td class="text-right">{{ item.pesoKg | number: '1.1-2' }} kg</td>
+                        <td class="text-right">
+                          {{
+                            item.volumenM3 !== null && item.volumenM3 !== undefined
+                              ? (item.volumenM3 | number: '1.1-3') + ' m³'
+                              : '—'
+                          }}
+                        </td>
+                        <td class="text-right item-total-weight">
+                          {{ item.pesoTotalKg | number: '1.1-2' }} kg
+                        </td>
+                        <td class="text-right">{{ item.volumenTotalM3 | number: '1.1-3' }} m³</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="items-empty">
+                <p>No hay ítems registrados en este envío.</p>
+              </div>
+            }
+          </section>
+
+          <!-- Section 4: Timeline Visual de Trazabilidad -->
+          <section class="detail-section" aria-labelledby="section-timeline-title">
+            <h3 id="section-timeline-title" class="section-title">
+              <span class="section-icon" aria-hidden="true">⏱️</span>
+              Historial de Trazabilidad
+            </h3>
+
+            @if (sortedHistorial().length > 0) {
+              <div class="timeline-container">
+                <ol class="timeline-list">
+                  @for (h of sortedHistorial(); track h.id; let last = $last) {
+                    <li class="timeline-item" [class.timeline-item-last]="last">
+                      <div class="timeline-marker">
+                        <span
+                          class="timeline-dot"
+                          [style.backgroundColor]="getEstadoColor(h.estadoNuevo)"
+                          aria-hidden="true"
+                        ></span>
+                        @if (!last) {
+                          <span class="timeline-line" aria-hidden="true"></span>
+                        }
+                      </div>
+                      <div class="timeline-content">
+                        <div class="timeline-heading">
+                          <span class="timeline-transition">
+                            @if (h.estadoAnterior && h.estadoAnterior !== h.estadoNuevo) {
+                              <span class="transition-prev">{{
+                                getEstadoLabel(h.estadoAnterior)
+                              }}</span>
+                              <span class="transition-arrow" aria-hidden="true">→</span>
+                              <span
+                                class="transition-curr"
+                                [style.color]="getEstadoColor(h.estadoNuevo)"
+                                >{{ getEstadoLabel(h.estadoNuevo) }}</span
+                              >
+                            } @else {
+                              <span
+                                class="transition-curr"
+                                [style.color]="getEstadoColor(h.estadoNuevo)"
+                                >{{ getEstadoLabel(h.estadoNuevo) }}</span
+                              >
+                            }
+                          </span>
+                          <time class="timeline-date">{{ formatDateTime(h.fechaHora) }}</time>
+                        </div>
+                        <div class="timeline-meta">
+                          <span class="timeline-user"
+                            >Por: <strong>{{ h.usuario }}</strong></span
+                          >
+                          @if (h.motivo) {
+                            <p class="timeline-motivo">
+                              <span class="motivo-label">Motivo:</span> {{ h.motivo }}
+                            </p>
+                          }
+                        </div>
+                      </div>
+                    </li>
+                  }
+                </ol>
+              </div>
+            } @else {
+              <div class="timeline-empty">
+                <p>No hay registros en el historial de trazabilidad.</p>
+              </div>
+            }
+          </section>
+
+          <!-- Section 5: Incidencias en Ruta (if any exist) -->
+          @if (incidencias().length > 0) {
+            <section class="detail-section" aria-labelledby="section-incidencias-title">
+              <h3 id="section-incidencias-title" class="section-title section-title-alert">
+                <span class="section-icon" aria-hidden="true">⚠️</span>
+                Incidencias en Ruta ({{ incidencias().length }})
+              </h3>
+              <div class="incidencias-list">
+                @for (inc of incidencias(); track inc.id) {
+                  <article class="incidencia-card">
+                    <div class="incidencia-header">
+                      <div class="incidencia-title-row">
+                        <span
+                          class="badge-severidad"
+                          [ngClass]="getSeveridadBadgeClass(inc.severidad)"
+                        >
+                          {{ inc.severidad }}
+                        </span>
+                        <h4 class="incidencia-tipo">{{ inc.tipo }}</h4>
+                        <span class="incidencia-estado-badge">{{ inc.estado }}</span>
+                      </div>
+                      <time class="incidencia-date">{{ formatDateTime(inc.fechaReporte) }}</time>
+                    </div>
+                    <p class="incidencia-desc">{{ inc.descripcion }}</p>
+                    <div class="incidencia-footer">
+                      <span class="incidencia-reporter"
+                        >Reportado por: <strong>{{ inc.usuarioReporta }}</strong></span
+                      >
+                      @if (inc.resolucion) {
+                        <div class="incidencia-resolucion">
+                          <span class="resolucion-label">Resolución:</span>
+                          <span class="resolucion-text">{{ inc.resolucion }}</span>
+                          @if (inc.usuarioResuelve) {
+                            <span class="resolucion-user"
+                              >(por {{ inc.usuarioResuelve
+                              }}{{
+                                inc.fechaResolucion
+                                  ? ' el ' + formatDateTime(inc.fechaResolucion)
+                                  : ''
+                              }})</span
+                            >
+                          }
+                        </div>
+                      }
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      }
+
+      <!-- Modal Footer -->
+      <footer class="modal-footer">
+        <button type="button" class="nx-button btn-secondary" (click)="onClose()">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+}

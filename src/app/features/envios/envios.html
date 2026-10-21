@@ -160,7 +160,14 @@
             @for (envio of envios(); track envio.id) {
               <tr>
                 <td>
-                  <span class="tracking-badge">{{ envio.numeroSeguimiento }}</span>
+                  <button
+                    type="button"
+                    class="tracking-badge tracking-badge-btn"
+                    (click)="openDetailModal(envio.id)"
+                    title="Ver detalle del envío"
+                  >
+                    {{ envio.numeroSeguimiento }}
+                  </button>
                 </td>
                 <td class="cell-primary">
                   <span class="client-name">{{ envio.clienteRazonSocial }}</span>
@@ -212,8 +219,17 @@
                   </div>
                 </td>
                 <td class="cell-actions">
-                  @if (canManage()) {
-                    <div class="table-actions">
+                  <div class="table-actions">
+                    <button
+                      type="button"
+                      class="nx-btn-table btn-table-detail"
+                      (click)="openDetailModal(envio.id)"
+                      title="Ver detalle del envío"
+                      aria-label="Ver detalle del envío"
+                    >
+                      <span aria-hidden="true">👁️</span> Ver detalle
+                    </button>
+                    @if (canManage()) {
                       @if (canAssign(envio)) {
                         <button
                           type="button"
@@ -234,8 +250,8 @@
                           Despachar
                         </button>
                       }
-                    </div>
-                  }
+                    }
+                  </div>
                 </td>
               </tr>
             }
@@ -285,5 +301,12 @@
     [choferes]="choferesDisponibles()"
     (close)="closeAssignModal()"
     (submitAsignacion)="onSubmitAssign($event)"
+  />
+
+  <!-- Modal Detalle Envío -->
+  <app-detalle-envio-modal
+    [isOpen]="detailModalOpen()"
+    [envioId]="selectedEnvioIdForDetail()"
+    (close)="closeDetailModal()"
   />
 </div>

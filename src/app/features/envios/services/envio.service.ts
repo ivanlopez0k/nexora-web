@@ -6,6 +6,8 @@ import type {
   AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
   DespacharEnvioRequest,
+  EnvioHistorialEstadoResponse,
+  EnvioIncidenciaResponse,
   EnvioListItem,
   EnvioQueryParams,
   EnvioResponse,
@@ -61,8 +63,16 @@ export class EnvioService {
     return this.http.get<EnviosMetricas>(`${this.baseUrl}/metricas`, { params: httpParams });
   }
 
-  getEnvioById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/${id}`);
+  getEnvioById(id: string): Observable<EnvioResponse> {
+    return this.http.get<EnvioResponse>(`${this.baseUrl}/${id}`);
+  }
+
+  getHistorial(id: string): Observable<EnvioHistorialEstadoResponse[]> {
+    return this.http.get<EnvioHistorialEstadoResponse[]>(`${this.baseUrl}/${id}/historial`);
+  }
+
+  getIncidencias(id: string): Observable<EnvioIncidenciaResponse[]> {
+    return this.http.get<EnvioIncidenciaResponse[]>(`${this.baseUrl}/${id}/incidencias`);
   }
 
   createEnvio(request: CrearEnvioRequest): Observable<EnvioResponse> {
@@ -76,10 +86,7 @@ export class EnvioService {
     return this.http.post<EnvioResponse>(`${this.baseUrl}/${envioId}/asignar`, request);
   }
 
-  despacharEnvio(
-    envioId: string,
-    request: DespacharEnvioRequest = {},
-  ): Observable<EnvioResponse> {
+  despacharEnvio(envioId: string, request: DespacharEnvioRequest = {}): Observable<EnvioResponse> {
     return this.http.post<EnvioResponse>(`${this.baseUrl}/${envioId}/despachar`, request);
   }
 }

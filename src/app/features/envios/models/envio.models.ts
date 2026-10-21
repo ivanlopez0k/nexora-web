@@ -54,6 +54,40 @@ export interface DespacharEnvioRequest {
   motivo?: string | null;
 }
 
+export interface EnvioItemResponse {
+  id: string;
+  descripcion: string;
+  pesoKg: number;
+  volumenM3?: number | null;
+  cantidad: number;
+  pesoTotalKg: number;
+  volumenTotalM3: number;
+}
+
+export interface EnvioHistorialEstadoResponse {
+  id: string;
+  envioId: string;
+  estadoAnterior: string;
+  estadoNuevo: string;
+  motivo?: string | null;
+  usuario: string;
+  fechaHora: string;
+}
+
+export interface EnvioIncidenciaResponse {
+  id: string;
+  envioId: string;
+  tipo: string;
+  severidad: string;
+  estado: string;
+  descripcion: string;
+  resolucion?: string | null;
+  usuarioReporta: string;
+  usuarioResuelve?: string | null;
+  fechaReporte: string;
+  fechaResolucion?: string | null;
+}
+
 export interface EnvioResponse {
   id: string;
   numeroSeguimiento: string;
@@ -68,11 +102,16 @@ export interface EnvioResponse {
   volumenTotalM3: number;
   cantidadItems: number;
   fechaCreacion: string;
-  items?: any[];
+  items?: EnvioItemResponse[];
+  historial?: EnvioHistorialEstadoResponse[] | null;
+  incidencias?: EnvioIncidenciaResponse[] | null;
   vehiculoId?: string | null;
   vehiculoPatente?: string | null;
+  vehiculoModelo?: string | null;
   choferId?: string | null;
   choferNombreCompleto?: string | null;
+  fechaDespacho?: string | null;
+  fechaEntrega?: string | null;
 }
 
 export interface CrearEnvioItemFormModel {
