@@ -10,6 +10,7 @@ import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions'
 import { CrearEnvioModal } from './components/crear-envio-modal/crear-envio-modal';
 import { AsignarRecursosModal } from './components/asignar-recursos-modal/asignar-recursos-modal';
 import { DetalleEnvioModal } from './components/detalle-envio-modal/detalle-envio-modal';
+import { IncidenciasModal } from './components/incidencias-modal/incidencias-modal';
 import type { Cliente } from '../clientes/models/cliente.models';
 import type { Vehiculo } from '../vehiculos/models/vehiculo.models';
 import type { Chofer } from '../choferes/models/chofer.models';
@@ -27,7 +28,14 @@ import {
 @Component({
   selector: 'app-envios',
   standalone: true,
-  imports: [CommonModule, FormsModule, CrearEnvioModal, AsignarRecursosModal, DetalleEnvioModal],
+  imports: [
+    CommonModule,
+    FormsModule,
+    CrearEnvioModal,
+    AsignarRecursosModal,
+    DetalleEnvioModal,
+    IncidenciasModal,
+  ],
   templateUrl: './envios.html',
   styleUrl: './envios.css',
 })
@@ -61,6 +69,10 @@ export class Envios implements OnInit {
   // Detail Modal State
   readonly selectedEnvioIdForDetail = signal<string | null>(null);
   readonly detailModalOpen = signal<boolean>(false);
+
+  // Incidencias Modal State
+  readonly selectedEnvioForIncidencias = signal<EnvioListItem | null>(null);
+  readonly incidenciasModalOpen = signal<boolean>(false);
 
   // Filters & Pagination
   readonly search = signal<string>('');
@@ -169,6 +181,21 @@ export class Envios implements OnInit {
   closeDetailModal(): void {
     this.detailModalOpen.set(false);
     this.selectedEnvioIdForDetail.set(null);
+  }
+
+  openIncidenciasModal(envio: EnvioListItem): void {
+    this.selectedEnvioForIncidencias.set(envio);
+    this.incidenciasModalOpen.set(true);
+  }
+
+  closeIncidenciasModal(): void {
+    this.incidenciasModalOpen.set(false);
+    this.selectedEnvioForIncidencias.set(null);
+  }
+
+  onIncidenciaUpdated(): void {
+    this.loadEnvios();
+    this.loadMetricas();
   }
 
   onSubmitAssign(request: AsignarRecursosEnvioRequest): void {

@@ -74,6 +74,60 @@ export interface EnvioHistorialEstadoResponse {
   fechaHora: string;
 }
 
+export type TipoIncidencia = 'Mecanica' | 'Clima' | 'Desvio' | 'RechazoEntrega' | 'Accidente' | 'Otro';
+export type SeveridadIncidencia = 'Baja' | 'Media' | 'Alta' | 'Critica';
+export type EstadoIncidencia = 'Abierta' | 'EnProceso' | 'Resuelta' | 'Desestimada';
+
+export interface ReportarIncidenciaRequest {
+  tipo: TipoIncidencia;
+  severidad: SeveridadIncidencia;
+  descripcion: string;
+}
+
+export interface ResolverIncidenciaRequest {
+  resolucion: string;
+  nuevoEstadoEnvio?: EstadoEnvio | null;
+}
+
+export interface TipoIncidenciaOption {
+  value: TipoIncidencia;
+  label: string;
+}
+
+export interface SeveridadIncidenciaOption {
+  value: SeveridadIncidencia;
+  label: string;
+  badgeClass: string;
+}
+
+export interface EstadoIncidenciaConfig {
+  label: string;
+  badgeClass: string;
+}
+
+export const TIPOS_INCIDENCIA: TipoIncidenciaOption[] = [
+  { value: 'Mecanica', label: 'Falla Mecánica' },
+  { value: 'Clima', label: 'Condiciones Climáticas' },
+  { value: 'Desvio', label: 'Desvío / Corte de Ruta' },
+  { value: 'RechazoEntrega', label: 'Rechazo de Entrega' },
+  { value: 'Accidente', label: 'Accidente de Tránsito' },
+  { value: 'Otro', label: 'Otro' },
+];
+
+export const SEVERIDADES_INCIDENCIA: SeveridadIncidenciaOption[] = [
+  { value: 'Baja', label: 'Baja', badgeClass: 'badge-sev-baja' },
+  { value: 'Media', label: 'Media', badgeClass: 'badge-sev-media' },
+  { value: 'Alta', label: 'Alta', badgeClass: 'badge-sev-alta' },
+  { value: 'Critica', label: 'Crítica', badgeClass: 'badge-sev-critica' },
+];
+
+export const ESTADOS_INCIDENCIA_CONFIG: Record<string, EstadoIncidenciaConfig> = {
+  Abierta: { label: 'Abierta', badgeClass: 'badge-inc-abierta' },
+  EnProceso: { label: 'En Proceso', badgeClass: 'badge-inc-en-proceso' },
+  Resuelta: { label: 'Resuelta', badgeClass: 'badge-inc-resuelta' },
+  Desestimada: { label: 'Desestimada', badgeClass: 'badge-inc-desestimada' },
+};
+
 export interface EnvioIncidenciaResponse {
   id: string;
   envioId: string;

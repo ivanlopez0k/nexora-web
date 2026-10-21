@@ -32,6 +32,8 @@ describe('Envios Component', () => {
     createEnvio: ReturnType<typeof vi.fn>;
     asignarRecursos: ReturnType<typeof vi.fn>;
     despacharEnvio: ReturnType<typeof vi.fn>;
+    reportarIncidencia: ReturnType<typeof vi.fn>;
+    resolverIncidencia: ReturnType<typeof vi.fn>;
   };
   let mockClienteService: {
     getClientes: ReturnType<typeof vi.fn>;
@@ -178,6 +180,8 @@ describe('Envios Component', () => {
       createEnvio: vi.fn(),
       asignarRecursos: vi.fn(),
       despacharEnvio: vi.fn(),
+      reportarIncidencia: vi.fn().mockReturnValue(of({})),
+      resolverIncidencia: vi.fn().mockReturnValue(of({})),
     };
 
     mockClienteService = {
@@ -793,6 +797,40 @@ describe('Envios Component', () => {
       component.closeDetailModal();
       expect(component.detailModalOpen()).toBe(false);
       expect(component.selectedEnvioIdForDetail()).toBeNull();
+    });
+
+    it('opens IncidenciasModal when "Incidencias" action button is clicked', () => {
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const incidenciasButtons = compiled.querySelectorAll('.btn-table-incidencias');
+      expect(incidenciasButtons.length).toBeGreaterThan(0);
+
+      (incidenciasButtons[0] as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(component.incidenciasModalOpen()).toBe(true);
+      expect(component.selectedEnvioForIncidencias()?.id).toBe('env-1');
+    });
+
+    it('closes IncidenciasModal and clears selected shipment when closeIncidenciasModal is called', () => {
+      component.openIncidenciasModal(mockEnvios[0]);
+      expect(component.incidenciasModalOpen()).toBe(true);
+      expect(component.selectedEnvioForIncidencias()?.id).toBe('env-1');
+
+      component.closeIncidenciasModal();
+      expect(component.incidenciasModalOpen()).toBe(false);
+      expect(component.selectedEnvioForIncidencias()).toBeNull();
+    });
+
+    it('reloads envios and metricas when onIncidenciaUpdated is called', () => {
+      mockEnvioService.getEnvios.mockClear();
+      mockEnvioService.getMetricas.mockClear();
+
+      component.onIncidenciaUpdated();
+
+      expect(mockEnvioService.getEnvios).toHaveBeenCalledTimes(1);
+      expect(mockEnvioService.getMetricas).toHaveBeenCalledTimes(1);
     });
   });
 });

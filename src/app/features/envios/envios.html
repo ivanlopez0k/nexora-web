@@ -229,6 +229,16 @@
                     >
                       <span aria-hidden="true">👁️</span> Ver detalle
                     </button>
+                    <button
+                      type="button"
+                      class="nx-btn-table btn-table-incidencias"
+                      [class.btn-table-incidencias-alert]="envio.estado === 'ConIncidencia'"
+                      (click)="openIncidenciasModal(envio)"
+                      title="Gestionar incidencias del envío"
+                      aria-label="Gestionar incidencias del envío"
+                    >
+                      <span aria-hidden="true">⚠️</span> Incidencias
+                    </button>
                     @if (canManage()) {
                       @if (canAssign(envio)) {
                         <button
@@ -308,5 +318,13 @@
     [isOpen]="detailModalOpen()"
     [envioId]="selectedEnvioIdForDetail()"
     (close)="closeDetailModal()"
+  />
+
+  <!-- Modal Incidencias -->
+  <app-incidencias-modal
+    [isOpen]="incidenciasModalOpen()"
+    [envio]="selectedEnvioForIncidencias()"
+    (close)="closeIncidenciasModal()"
+    (incidenciaUpdated)="onIncidenciaUpdated()"
   />
 </div>

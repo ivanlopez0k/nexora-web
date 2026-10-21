@@ -13,6 +13,8 @@ import type {
   EnvioResponse,
   EnviosMetricas,
   PagedResult,
+  ReportarIncidenciaRequest,
+  ResolverIncidenciaRequest,
 } from '../models/envio.models';
 
 describe('EnvioService', () => {
@@ -251,6 +253,76 @@ describe('EnvioService', () => {
       const req = httpMock.expectOne('/api/v1/envios/env-001/incidencias');
       expect(req.request.method).toBe('GET');
       req.flush(mockIncidencias);
+    });
+  });
+
+  describe('reportarIncidencia', () => {
+    it('sends POST to /api/v1/envios/:id/incidencias and returns created incident', () => {
+      const envioId = 'env-001';
+      const payload: ReportarIncidenciaRequest = {
+        tipo: 'Mecanica',
+        severidad: 'Alta',
+        descripcion: 'Pinchadura de neumático trasero derecho en km 140',
+      };
+
+      const mockResponse: EnvioIncidenciaResponse = {
+        id: 'inc-100',
+        envioId: 'env-001',
+        tipo: 'Mecanica',
+        severidad: 'Alta',
+        estado: 'Abierta',
+        descripcion: 'Pinchadura de neumático trasero derecho en km 140',
+        resolucion: null,
+        usuarioReporta: 'operador_central',
+        usuarioResuelve: null,
+        fechaReporte: '2026-10-20T12:00:00Z',
+        fechaResolucion: null,
+      };
+
+      service.reportarIncidencia(envioId, payload).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(`/api/v1/envios/${envioId}/incidencias`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
+    });
+  });
+
+  describe('resolverIncidencia', () => {
+    it('sends PUT to /api/v1/envios/:id/incidencias/:incidenciaId/resolver and returns resolved incident', () => {
+      const envioId = 'env-001';
+      const incidenciaId = 'inc-100';
+      const payload: ResolverIncidenciaRequest = {
+        resolucion: 'Se envió auxilio mecánico y se reemplazó el neumático. Reanuda ruta.',
+        nuevoEstadoEnvio: 'EnTransito',
+      };
+
+      const mockResponse: EnvioIncidenciaResponse = {
+        id: 'inc-100',
+        envioId: 'env-001',
+        tipo: 'Mecanica',
+        severidad: 'Alta',
+        estado: 'Resuelta',
+        descripcion: 'Pinchadura de neumático trasero derecho en km 140',
+        resolucion: 'Se envió auxilio mecánico y se reemplazó el neumático. Reanuda ruta.',
+        usuarioReporta: 'operador_central',
+        usuarioResuelve: 'taller_movil',
+        fechaReporte: '2026-10-20T12:00:00Z',
+        fechaResolucion: '2026-10-20T13:30:00Z',
+      };
+
+      service.resolverIncidencia(envioId, incidenciaId, payload).subscribe((res) => {
+        expect(res).toEqual(mockResponse);
+      });
+
+      const req = httpMock.expectOne(
+        `/api/v1/envios/${envioId}/incidencias/${incidenciaId}/resolver`,
+      );
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual(payload);
+      req.flush(mockResponse);
     });
   });
 

@@ -1,0 +1,380 @@
+@if (isOpen()) {
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="incidencias-modal-title"
+  >
+    <div class="modal-container">
+      <!-- Header -->
+      <header class="modal-header">
+        <div class="modal-header-info">
+          <div class="header-badges">
+            <h2 id="incidencias-modal-title" class="modal-title">
+              Gestión de Incidencias en Ruta
+            </h2>
+            @if (envio(); as e) {
+              <span class="tracking-badge">{{ e.numeroSeguimiento }}</span>
+            }
+          </div>
+          <p class="modal-subtitle">
+            Registro y resolución de eventos imprevistos ocurridos durante el transporte de carga.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onClose()"
+          aria-label="Cerrar modal"
+          title="Cerrar"
+        >
+          &times;
+        </button>
+      </header>
+
+      <!-- Shipment summary bar -->
+      @if (envio(); as e) {
+        <div class="shipment-summary-bar">
+          <div class="summary-route">
+            <span class="route-point" [title]="e.origen">{{ e.origen }}</span>
+            <span class="route-arrow" aria-hidden="true">──→</span>
+            <span class="route-point" [title]="e.destino">{{ e.destino }}</span>
+          </div>
+
+          <div class="summary-meta">
+            <span
+              class="status-badge"
+              [ngClass]="getEstadoEnvioConfig(e.estado).badgeClass"
+              [style.--c]="getEstadoEnvioConfig(e.estado).color"
+            >
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ getEstadoEnvioConfig(e.estado).label }}
+            </span>
+
+            @if (e.vehiculoPatente || e.choferNombreCompleto) {
+              <div class="summary-resources">
+                @if (e.vehiculoPatente) {
+                  <span class="vehicle-tag">{{ e.vehiculoPatente }}</span>
+                }
+                @if (e.choferNombreCompleto) {
+                  <span class="driver-name" [title]="e.choferNombreCompleto">
+                    {{ e.choferNombreCompleto }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Alerts -->
+      @if (error()) {
+        <div class="nx-alert alert-error" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="alert-body">
+            <span class="nx-alert-title">Error</span>
+            <span class="nx-alert-text">{{ error() }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Tabs Navigation -->
+      <nav class="modal-tabs" aria-label="Pestañas de incidencias">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.tab-btn-active]="activeTab() === 'lista'"
+          (click)="setTab('lista')"
+        >
+          📋 Incidencias del Envío ({{ incidencias().length }})
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.tab-btn-active]="activeTab() === 'reportar'"
+          (click)="setTab('reportar')"
+        >
+          ⚠️ + Reportar Incidencia
+        </button>
+      </nav>
+
+      <!-- Tab 1: Lista de Incidencias -->
+      @if (activeTab() === 'lista') {
+        <div class="tab-content modal-content-scroll">
+          @if (loading()) {
+            <div class="modal-loading-state" role="status">
+              <div class="spinner-large" aria-hidden="true"></div>
+              <p>Cargando incidencias del envío…</p>
+            </div>
+          } @else if (incidencias().length === 0) {
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">🛡️</div>
+              <h3>Sin incidencias registradas</h3>
+              <p>Este envío no presenta ninguna incidencia reportada actualmente.</p>
+              <button type="button" class="nx-button btn-primary" (click)="setTab('reportar')">
+                + Registrar Primera Incidencia
+              </button>
+            </div>
+          } @else {
+            <!-- Incidencias Abiertas / En Proceso -->
+            @if (incidenciasAbiertas().length > 0) {
+              <div class="incidencias-group">
+                <div class="group-header group-header-open">
+                  <span class="group-title">
+                    Incidencias Activas / En Proceso ({{ incidenciasAbiertas().length }})
+                  </span>
+                  <span class="group-hint">Requieren resolución operativa</span>
+                </div>
+
+                <div class="incidencias-cards">
+                  @for (inc of incidenciasAbiertas(); track inc.id) {
+                    <article class="incidencia-card open-card">
+                      <div class="card-header">
+                        <div class="card-header-left">
+                          <span class="tipo-badge">{{ getTipoLabel(inc.tipo) }}</span>
+                          <span class="sev-badge" [ngClass]="getSeveridadBadgeClass(inc.severidad)">
+                            Severidad: {{ inc.severidad }}
+                          </span>
+                          <span class="inc-status-badge" [ngClass]="getEstadoIncidenciaConfig(inc.estado).badgeClass">
+                            {{ getEstadoIncidenciaConfig(inc.estado).label }}
+                          </span>
+                        </div>
+                        <span class="card-date">{{ formatDate(inc.fechaReporte) }}</span>
+                      </div>
+
+                      <div class="card-body">
+                        <p class="inc-description">{{ inc.descripcion }}</p>
+                        <div class="inc-meta">
+                          <span class="meta-item">
+                            <strong>Reportado por:</strong> {{ inc.usuarioReporta }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Resolver button / form -->
+                      <div class="card-actions">
+                        @if (selectedIncidenciaIdForResolve() !== inc.id) {
+                          <button
+                            type="button"
+                            class="nx-button btn-resolve"
+                            (click)="openResolverForm(inc.id)"
+                          >
+                            Resolver Incidencia
+                          </button>
+                        } @else {
+                          <!-- Inline resolution form -->
+                          <div class="resolve-form-box">
+                            <h4 class="resolve-form-title">Resolución de Incidencia</h4>
+                            <div class="form-group">
+                              <label [for]="'resolucion-' + inc.id" class="form-label required">
+                                Acciones tomadas y resolución:
+                              </label>
+                              <textarea
+                                [id]="'resolucion-' + inc.id"
+                                class="nx-field textarea-field"
+                                rows="3"
+                                placeholder="Detalle las acciones operativas implementadas para resolver el imprevisto..."
+                                [ngModel]="resolucion()"
+                                (ngModelChange)="resolucion.set($event)"
+                                maxlength="1000"
+                              ></textarea>
+                            </div>
+
+                            <div class="form-group">
+                              <label [for]="'nuevo-estado-' + inc.id" class="form-label">
+                                Nuevo estado del envío:
+                              </label>
+                              <select
+                                [id]="'nuevo-estado-' + inc.id"
+                                class="nx-field select-field"
+                                [ngModel]="nuevoEstadoEnvio()"
+                                (ngModelChange)="nuevoEstadoEnvio.set($event)"
+                              >
+                                <option value="EnTransito">En Tránsito (Continuar ruta normal)</option>
+                                <option value="ListoParaDespacho">Listo para Despacho (Reasignar o reprogramar)</option>
+                                <option value="Entregado">Entregado (Completado con conformidad)</option>
+                                <option value="Cancelado">Cancelado (Envío cancelado/devuelto)</option>
+                              </select>
+                            </div>
+
+                            <div class="resolve-buttons">
+                              <button
+                                type="button"
+                                class="nx-button btn-confirm-resolve"
+                                (click)="onSubmitResolver(inc.id)"
+                                [disabled]="!resolucion().trim() || submitting()"
+                              >
+                                @if (submitting()) {
+                                  <span class="spinner-small" aria-hidden="true"></span>
+                                  Guardando...
+                                } @else {
+                                  Confirmar Resolución
+                                }
+                              </button>
+                              <button
+                                type="button"
+                                class="nx-button btn-cancel-resolve"
+                                (click)="cancelResolverForm()"
+                                [disabled]="submitting()"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </article>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Incidencias Resueltas -->
+            @if (incidenciasResueltas().length > 0) {
+              <div class="incidencias-group">
+                <div class="group-header group-header-resolved">
+                  <span class="group-title">
+                    Incidencias Resueltas / Desestimadas ({{ incidenciasResueltas().length }})
+                  </span>
+                </div>
+
+                <div class="incidencias-cards">
+                  @for (inc of incidenciasResueltas(); track inc.id) {
+                    <article class="incidencia-card resolved-card">
+                      <div class="card-header">
+                        <div class="card-header-left">
+                          <span class="tipo-badge">{{ getTipoLabel(inc.tipo) }}</span>
+                          <span class="sev-badge" [ngClass]="getSeveridadBadgeClass(inc.severidad)">
+                            Severidad: {{ inc.severidad }}
+                          </span>
+                          <span class="inc-status-badge badge-inc-resuelta">
+                            {{ getEstadoIncidenciaConfig(inc.estado).label }}
+                          </span>
+                        </div>
+                        <span class="card-date">{{ formatDate(inc.fechaReporte) }}</span>
+                      </div>
+
+                      <div class="card-body">
+                        <p class="inc-description">{{ inc.descripcion }}</p>
+
+                        <div class="resolved-box">
+                          <span class="resolved-label">Acciones tomadas / Resolución:</span>
+                          <p class="resolved-text">{{ inc.resolucion || 'Sin detalles de resolución especificados.' }}</p>
+                        </div>
+
+                        <div class="inc-meta">
+                          <span class="meta-item">
+                            <strong>Reportado por:</strong> {{ inc.usuarioReporta }} ({{ formatDate(inc.fechaReporte) }})
+                          </span>
+                          @if (inc.usuarioResuelve) {
+                            <span class="meta-item">
+                              <strong>Resuelto por:</strong> {{ inc.usuarioResuelve }} ({{ formatDate(inc.fechaResolucion) }})
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    </article>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Tab 2: Formulario de Reporte -->
+      @if (activeTab() === 'reportar') {
+        <div class="tab-content modal-content-scroll">
+          <div class="report-warning-box">
+            <span class="warning-icon" aria-hidden="true">⚠️</span>
+            <div class="warning-text">
+              <strong>Atención operativa:</strong> Al registrar una incidencia, el estado del envío cambiará automáticamente a <strong>"Con Incidencia"</strong> para alertar inmediatamente al equipo de operaciones y tráfico.
+            </div>
+          </div>
+
+          <form class="report-form" (ngSubmit)="onSubmitReportar()">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="inc-tipo" class="form-label required">Tipo de Incidencia:</label>
+                <select
+                  id="inc-tipo"
+                  class="nx-field select-field"
+                  [ngModel]="tipo()"
+                  (ngModelChange)="tipo.set($event)"
+                  name="tipo"
+                >
+                  @for (opt of tiposIncidencia; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="inc-severidad" class="form-label required">Severidad:</label>
+                <select
+                  id="inc-severidad"
+                  class="nx-field select-field"
+                  [ngModel]="severidad()"
+                  (ngModelChange)="severidad.set($event)"
+                  name="severidad"
+                >
+                  @for (opt of severidadesIncidencia; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="inc-descripcion" class="form-label required">
+                Descripción del imprevisto:
+              </label>
+              <textarea
+                id="inc-descripcion"
+                class="nx-field textarea-field"
+                rows="4"
+                placeholder="Detalle lo sucedido: ubicación exacta, causas visibles, impacto estimado en la carga y tiempo de entrega..."
+                [ngModel]="descripcion()"
+                (ngModelChange)="descripcion.set($event)"
+                name="descripcion"
+                maxlength="1000"
+                required
+              ></textarea>
+              <span class="char-count">{{ descripcion().length }} / 1000 caracteres</span>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="nx-button btn-secondary"
+                (click)="setTab('lista')"
+              >
+                Volver al listado
+              </button>
+              <button
+                type="submit"
+                class="nx-button btn-danger-submit"
+                [disabled]="!descripcion().trim() || submitting()"
+              >
+                @if (submitting()) {
+                  <span class="spinner-small" aria-hidden="true"></span>
+                  Registrando...
+                } @else {
+                  ⚠️ Registrar Incidencia
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Footer -->
+      <footer class="modal-footer">
+        <button type="button" class="nx-button btn-close-footer" (click)="onClose()">
+          Cerrar
+        </button>
+      </footer>
+    </div>
+  </div>
+}
