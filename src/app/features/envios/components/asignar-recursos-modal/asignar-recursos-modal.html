@@ -1,0 +1,259 @@
+@if (isOpen()) {
+  <div
+    class="modal-backdrop"
+    (click)="onBackdropClick($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="asignar-recursos-title"
+  >
+    <div class="modal-container">
+      <!-- Header -->
+      <header class="modal-header">
+        <div class="modal-header-text">
+          <h2 id="asignar-recursos-title" class="modal-title">Asignar Recursos al Envío</h2>
+          <div class="modal-subtitle">
+            <span class="tracking-badge">{{ envio()?.numeroSeguimiento }}</span>
+            <span class="client-name">{{ envio()?.clienteRazonSocial }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="onCancel()"
+          [disabled]="isSubmitting()"
+          aria-label="Cerrar modal"
+        >
+          &times;
+        </button>
+      </header>
+
+      <!-- Error Alert -->
+      @if (errorMessage()) {
+        <div class="nx-alert alert-error" role="alert">
+          <span class="nx-alert-icon">!</span>
+          <div class="modal-alert-body">
+            <span class="nx-alert-title">Error al asignar recursos</span>
+            <span class="nx-alert-text">{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate class="modal-form">
+        <!-- Section 1: Resumen de Carga -->
+        <section class="form-section cargo-summary-section" aria-labelledby="section-carga-title">
+          <h3 id="section-carga-title" class="section-title">
+            <span class="section-icon" aria-hidden="true">📦</span>
+            Resumen de Carga
+          </h3>
+          <div class="summary-cards">
+            <div class="summary-card">
+              <span class="summary-label">Peso Total</span>
+              <span class="summary-value cargo-weight-display">{{ envioPeso() | number }} kg</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Bultos</span>
+              <span class="summary-value">{{ envio()?.cantidadItems ?? 0 }}</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Volumen Total</span>
+              <span class="summary-value">{{ (envio()?.volumenTotalM3 ?? 0) | number }} m³</span>
+            </div>
+            <div class="summary-card summary-card-route">
+              <span class="summary-label">Ruta</span>
+              <span class="summary-route">
+                <span>{{ envio()?.origen }}</span>
+                <span class="route-arrow" aria-hidden="true">→</span>
+                <span>{{ envio()?.destino }}</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Selección de Vehículo -->
+        <section class="form-section" aria-labelledby="section-vehiculo-title">
+          <h3 id="section-vehiculo-title" class="section-title">
+            <span class="section-icon" aria-hidden="true">🚛</span>
+            Selección de Vehículo
+          </h3>
+
+          <div class="form-group">
+            <label for="select-vehiculo" class="form-label">Vehículo Disponible *</label>
+            <select
+              id="select-vehiculo"
+              class="nx-field"
+              [class.nx-field-error]="isVehiculoInvalid()"
+              [ngModel]="vehiculoId()"
+              (ngModelChange)="vehiculoId.set($event)"
+              name="vehiculoId"
+              [disabled]="isSubmitting()"
+            >
+              <option value="" disabled>Seleccione un vehículo…</option>
+              @for (v of vehiculos(); track v.id) {
+                <option [value]="v.id">
+                  {{ v.patente }} — {{ v.marca }} {{ v.modelo }} ({{ v.tipo }} · {{ v.capacidad | number }} kg)
+                </option>
+              }
+            </select>
+            @if (isVehiculoInvalid()) {
+              <span class="nx-inline-error">Debes seleccionar un vehículo.</span>
+            }
+          </div>
+
+          <!-- Vehicle details & Capacity Bar -->
+          @if (selectedVehiculo(); as vehiculo) {
+            <div class="vehicle-capacity-card" [class.has-overload]="superaCapacidad()">
+              <div class="capacity-header">
+                <div class="capacity-title">
+                  <span class="vehicle-badge">{{ vehiculo.tipo }}</span>
+                  <span class="vehicle-specs">{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.patente }})</span>
+                </div>
+                <span class="capacity-stat" [class.stat-overload]="superaCapacidad()">
+                  Ocupación: {{ porcentajeOcupacion() }}% (Carga: {{ envioPeso() | number }} kg / Capacidad: {{ vehiculoCapacidad() | number }} kg)
+                </span>
+              </div>
+
+              <!-- Progress bar -->
+              <div
+                class="progress-bar-container"
+                role="progressbar"
+                [attr.aria-valuenow]="porcentajeOcupacion()"
+                aria-valuemin="0"
+                [attr.aria-valuemax]="100"
+                [attr.aria-valuetext]="'Ocupación del ' + porcentajeOcupacion() + ' por ciento'"
+              >
+                <div
+                  class="progress-bar-fill"
+                  [ngClass]="progressColorClass()"
+                  [style.width.%]="progressWidth()"
+                ></div>
+              </div>
+
+              @if (superaCapacidad()) {
+                <div class="capacity-warning-alert" role="alert">
+                  <span class="warning-icon" aria-hidden="true">⚠️</span>
+                  <div class="warning-text">
+                    <strong>Capacidad superada:</strong> El peso del envío supera la capacidad máxima de carga del vehículo seleccionado.
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Section 3: Selección de Chofer -->
+        <section class="form-section" aria-labelledby="section-chofer-title">
+          <h3 id="section-chofer-title" class="section-title">
+            <span class="section-icon" aria-hidden="true">👤</span>
+            Selección de Chofer
+          </h3>
+
+          <div class="form-group">
+            <label for="select-chofer" class="form-label">Chofer Disponible *</label>
+            <select
+              id="select-chofer"
+              class="nx-field"
+              [class.nx-field-error]="isChoferInvalid()"
+              [ngModel]="choferId()"
+              (ngModelChange)="choferId.set($event)"
+              name="choferId"
+              [disabled]="isSubmitting()"
+            >
+              <option value="" disabled>Seleccione un chofer…</option>
+              @for (c of choferes(); track c.id) {
+                <option [value]="c.id">
+                  {{ c.empleadoNombre }} (Legajo: {{ c.empleadoLegajo }} · Licencia: {{ c.numeroLicencia }})
+                </option>
+              }
+            </select>
+            @if (isChoferInvalid()) {
+              <span class="nx-inline-error">Debes seleccionar un chofer.</span>
+            }
+          </div>
+
+          <!-- Driver details and habilitaciones -->
+          @if (selectedChofer(); as chofer) {
+            <div class="chofer-info-card">
+              <div class="chofer-info-row">
+                <div class="chofer-license-info">
+                  <span class="license-label">Licencia:</span>
+                  <span class="license-value">{{ chofer.numeroLicencia }}</span>
+                  <span class="license-expiry">
+                    (Vence: {{ formatDate(chofer.vencimientoLicencia) }})
+                  </span>
+                </div>
+                <div class="chofer-habs">
+                  <span class="habs-label">Habilitaciones:</span>
+                  <div class="habs-list">
+                    @for (hab of chofer.habilitaciones; track hab) {
+                      <span class="hab-badge">{{ hab }}</span>
+                    }
+                    @if (!chofer.habilitaciones || chofer.habilitaciones.length === 0) {
+                      <span class="hab-empty">Sin habilitaciones registradas</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              @if (!choferHabilitado() && selectedVehiculo()) {
+                <div class="habilitation-warning-alert" role="alert">
+                  <span class="warning-icon" aria-hidden="true">⚠️</span>
+                  <div class="warning-text">
+                    El chofer seleccionado no posee habilitación para el tipo de vehículo ({{ selectedVehiculo()?.tipo }}).
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Section 4: Observaciones / Motivo -->
+        <section class="form-section" aria-labelledby="section-motivo-title">
+          <h3 id="section-motivo-title" class="section-title">
+            <span class="section-icon" aria-hidden="true">📝</span>
+            Observaciones / Motivo de Asignación
+          </h3>
+
+          <div class="form-group">
+            <label for="motivo-input" class="form-label">
+              Motivo / Comentarios (opcional)
+            </label>
+            <textarea
+              id="motivo-input"
+              class="nx-field textarea-field"
+              rows="3"
+              placeholder="Observaciones de la asignación, instrucciones especiales o justificación…"
+              [ngModel]="motivo()"
+              (ngModelChange)="motivo.set($event)"
+              name="motivo"
+              [disabled]="isSubmitting()"
+            ></textarea>
+          </div>
+        </section>
+
+        <!-- Footer Actions -->
+        <footer class="modal-footer">
+          <button
+            type="button"
+            class="nx-button btn-secondary"
+            (click)="onCancel()"
+            [disabled]="isSubmitting()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="nx-button btn-primary"
+            [disabled]="!canSubmit() || isSubmitting()"
+          >
+            @if (isSubmitting()) {
+              <span class="btn-spinner" aria-hidden="true"></span>
+              <span>Asignando…</span>
+            } @else {
+              <span>Confirmar Asignación</span>
+            }
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}

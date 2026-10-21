@@ -3,14 +3,20 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EnvioService } from './services/envio.service';
 import { ClienteService } from '../clientes/services/cliente.service';
+import { VehiculoService } from '../vehiculos/services/vehiculo.service';
+import { ChoferService } from '../choferes/services/chofer.service';
 import { AuthTokenService } from '../../shared/auth/auth-token.service';
 import { WRITE_PERMISSION_MAP, hasAnyRole } from '../../shared/auth/permissions';
 import { CrearEnvioModal } from './components/crear-envio-modal/crear-envio-modal';
+import { AsignarRecursosModal } from './components/asignar-recursos-modal/asignar-recursos-modal';
 import type { Cliente } from '../clientes/models/cliente.models';
+import type { Vehiculo } from '../vehiculos/models/vehiculo.models';
+import type { Chofer } from '../choferes/models/chofer.models';
 import {
   ESTADOS_ENVIO_CONFIG,
   EstadoConfig,
   EstadoEnvio,
+  AsignarRecursosEnvioRequest,
   CrearEnvioRequest,
   EnvioListItem,
   EnviosMetricas,
@@ -20,13 +26,15 @@ import {
 @Component({
   selector: 'app-envios',
   standalone: true,
-  imports: [CommonModule, FormsModule, CrearEnvioModal],
+  imports: [CommonModule, FormsModule, CrearEnvioModal, AsignarRecursosModal],
   templateUrl: './envios.html',
   styleUrl: './envios.css',
 })
 export class Envios implements OnInit {
   private readonly envioService = inject(EnvioService);
   private readonly clienteService = inject(ClienteService);
+  private readonly vehiculoService = inject(VehiculoService);
+  private readonly choferService = inject(ChoferService);
   private readonly tokenService = inject(AuthTokenService);
 
   readonly envios = signal<EnvioListItem[]>([]);
@@ -40,6 +48,14 @@ export class Envios implements OnInit {
   readonly createModalOpen = signal<boolean>(false);
   readonly createModalSubmitting = signal<boolean>(false);
   readonly createModalError = signal<string | null>(null);
+
+  // Assign Resources Modal State
+  readonly vehiculosDisponibles = signal<Vehiculo[]>([]);
+  readonly choferesDisponibles = signal<Chofer[]>([]);
+  readonly assignModalOpen = signal<boolean>(false);
+  readonly selectedEnvioForAssign = signal<EnvioListItem | null>(null);
+  readonly assignModalSubmitting = signal<boolean>(false);
+  readonly assignModalError = signal<string | null>(null);
 
   // Filters & Pagination
   readonly search = signal<string>('');
@@ -116,6 +132,89 @@ export class Envios implements OnInit {
         this.createModalError.set(msg);
       },
     });
+  }
+
+  openAssignModal(envio: EnvioListItem): void {
+    this.selectedEnvioForAssign.set(envio);
+    this.assignModalError.set(null);
+    this.assignModalOpen.set(true);
+
+    this.vehiculoService.getVehiculos({ estado: 'Disponible', pageSize: 100 }).subscribe({
+      next: (res) => this.vehiculosDisponibles.set(res.items),
+      error: () => this.vehiculosDisponibles.set([]),
+    });
+
+    this.choferService.getChoferes({ soloActivos: true, pageSize: 100 }).subscribe({
+      next: (res) => this.choferesDisponibles.set(res.items),
+      error: () => this.choferesDisponibles.set([]),
+    });
+  }
+
+  closeAssignModal(): void {
+    this.assignModalOpen.set(false);
+    this.selectedEnvioForAssign.set(null);
+    this.assignModalError.set(null);
+  }
+
+  onSubmitAssign(request: AsignarRecursosEnvioRequest): void {
+    const envio = this.selectedEnvioForAssign();
+    if (!envio) return;
+
+    this.assignModalSubmitting.set(true);
+    this.assignModalError.set(null);
+
+    this.envioService.asignarRecursos(envio.id, request).subscribe({
+      next: () => {
+        this.assignModalSubmitting.set(false);
+        this.assignModalOpen.set(false);
+        this.selectedEnvioForAssign.set(null);
+        this.loadEnvios();
+        this.loadMetricas();
+      },
+      error: (err) => {
+        this.assignModalSubmitting.set(false);
+        const msg =
+          err?.error?.message ||
+          err?.message ||
+          'No se pudieron asignar los recursos al envío. Intente nuevamente.';
+        this.assignModalError.set(msg);
+      },
+    });
+  }
+
+  onDespachar(envio: EnvioListItem): void {
+    const confirmed = window.confirm(
+      `¿Está seguro de despachar el envío ${envio.numeroSeguimiento}?`,
+    );
+    if (!confirmed) return;
+
+    this.envioService.despacharEnvio(envio.id).subscribe({
+      next: () => {
+        this.loadEnvios();
+        this.loadMetricas();
+      },
+      error: (err) => {
+        const msg =
+          err?.error?.message ||
+          err?.message ||
+          'No se pudo despachar el envío. Intente nuevamente.';
+        this.error.set(msg);
+      },
+    });
+  }
+
+  canAssign(envio: EnvioListItem): boolean {
+    const allowed: EstadoEnvio[] = [
+      'Solicitado',
+      'Preparando',
+      'ListoParaDespacho',
+      'Asignado',
+    ];
+    return allowed.includes(envio.estado);
+  }
+
+  canDespachar(envio: EnvioListItem): boolean {
+    return envio.estado === 'Asignado';
   }
 
   loadMetricas(): void {

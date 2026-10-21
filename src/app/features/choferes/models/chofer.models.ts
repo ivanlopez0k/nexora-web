@@ -22,6 +22,7 @@ export interface ChoferFilter {
   pageSize?: number;
   centroLogisticoId?: string;
   estado?: string;
+  soloActivos?: boolean;
   vencerEnDias?: number;
 }
 
